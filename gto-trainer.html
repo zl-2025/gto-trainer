@@ -1,0 +1,3324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>策略训练与概率计算软件 V1.0</title>
+<style>
+:root{
+  --bg:#0a0e13;
+  --panel:#111820;
+  --panel2:#16202b;
+  --line:#243141;
+  --text:#e6edf3;
+  --muted:#8b98a5;
+  --green:#3fb950;
+  --red:#f85149;
+  --blue:#4493f8;
+  --amber:#d29922;
+  --raise:#b1403a;
+  --call:#1f4f88;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  background:
+    radial-gradient(1100px 520px at 50% -8%, #143327 0%, transparent 62%),
+    radial-gradient(900px 500px at 90% 110%, #12202e 0%, transparent 60%),
+    var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:26px 20px 70px}
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:18px}
+.brand h1{font-size:22px;margin:0 0 5px;letter-spacing:.3px}
+.brand p{margin:0;color:var(--muted);font-size:13px}
+.badge{display:inline-block;font-size:11px;color:#9fe0b1;background:#16341f;border:1px solid #245a33;padding:3px 9px;border-radius:999px;margin-left:8px;vertical-align:middle;font-weight:600}
+.tabs{display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);padding:6px;border-radius:12px}
+.tab{
+  border:0;background:transparent;color:var(--muted);font:inherit;font-size:14px;font-weight:600;
+  padding:9px 16px;border-radius:8px;cursor:pointer;transition:.18s;white-space:nowrap;
+}
+.tab:hover{color:var(--text);background:#18222d}
+.tab.active{background:#1f6feb;color:#fff;box-shadow:0 2px 10px rgba(31,111,235,.35)}
+.panel{display:none}
+.panel.active{display:block;animation:fade .22s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.card{
+  background:linear-gradient(180deg,#121a23 0%,#0f1620 100%);
+  border:1px solid var(--line);border-radius:14px;padding:18px 20px;
+  box-shadow:0 8px 26px rgba(0,0,0,.25);
+}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.chip{
+  border:1px solid var(--line);background:#131c25;color:var(--muted);
+  font:inherit;font-size:13px;font-weight:600;padding:8px 13px;border-radius:9px;cursor:pointer;transition:.16s;
+}
+.chip:hover{color:var(--text);border-color:#3a4b5e}
+.chip.active{background:#173d2a;border-color:#2f7a4c;color:#9fe0b1}
+.pre-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(330px,460px);gap:16px;align-items:start}
+@media(max-width:900px){.pre-grid{grid-template-columns:1fr}}
+.scene-title{font-size:16px;font-weight:700;margin:0 0 4px}
+.scene-desc{color:var(--muted);font-size:13px;margin:0 0 16px;line-height:1.55}
+.holecards{display:flex;gap:12px;margin:6px 0 18px}
+.pcard{
+  width:76px;height:108px;border-radius:11px;background:#f4f3ee;color:#111;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  font-weight:800;font-size:32px;line-height:1;
+  box-shadow:0 6px 16px rgba(0,0,0,.35), inset 0 0 0 1px #d7d4c8;
+  animation:pop .18s ease;
+}
+@keyframes pop{from{transform:scale(.9);opacity:.5}to{transform:none;opacity:1}}
+.pcard .suit{font-size:30px}
+.pcard.red{color:#b7332b}
+.nota{color:var(--muted);font-size:12px;margin-top:-8px;margin-bottom:14px}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{
+  border:0;font:inherit;font-weight:700;font-size:14px;padding:12px 22px;border-radius:10px;
+  cursor:pointer;transition:.16s;color:#fff;
+}
+.btn:active{transform:translateY(1px)}
+.btn.raise{background:#b1403a}
+.btn.raise:hover{background:#c94c45}
+.btn.call{background:#1f6feb}
+.btn.call:hover{background:#2b7df7}
+.btn.fold{background:#2a3542;color:#c8d2dd}
+.btn.fold:hover{background:#354353}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--muted)}
+.btn.ghost:hover{color:var(--text);border-color:#3a4b5e}
+.btn:disabled{opacity:.45;cursor:default}
+.feedback{margin-top:16px;border-radius:10px;padding:13px 15px;font-size:13px;line-height:1.65;display:none}
+.feedback.show{display:block}
+.feedback.ok{background:#0f2a19;border:1px solid #245a33}
+.feedback.bad{background:#2a1314;border:1px solid #6b2b2c}
+.feedback b{font-size:14px}
+.feedback .sub{color:var(--muted);margin-top:5px}
+.feedback .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;margin-right:6px}
+.tag.raise{background:#b1403a;color:#fff}
+.tag.call{background:#1f6feb;color:#fff}
+.tag.fold{background:#2a3542;color:#c8d2dd}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:18px;border-top:1px solid #1c2632;padding-top:14px}
+.small{font-size:12px;color:var(--muted)}
+.matrix-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.matrix-head h3{font-size:14px;margin:0}
+.matrix{display:grid;grid-template-columns:repeat(13,1fr);gap:3px}
+.cell{
+  aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+  border-radius:4px;font-size:clamp(7px,1.02vw,11px);font-weight:600;letter-spacing:-.2px;
+  transition:background .18s,color .18s,transform .12s;user-select:none;cursor:default;
+}
+.cell.raise{background:var(--raise);color:#fff}
+.cell.call{background:var(--call);color:#dbeaff}
+.cell.fold{background:#161d26;color:#5b6878}
+.cell.masked{background:#182029;color:transparent}
+.cell.active{outline:2px solid #f0c674;outline-offset:1px;transform:scale(1.08);z-index:2;box-shadow:0 0 12px rgba(240,198,116,.35)}
+.legend{display:flex;gap:14px;margin-top:12px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.legend .r{background:var(--raise)}.legend .c{background:var(--call)}.legend .f{background:#26313d}
+.width-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.wpill{font-size:11px;background:#16202b;border:1px solid var(--line);border-radius:7px;padding:5px 9px;color:var(--muted)}
+.wpill b{color:var(--text);font-weight:700}
+/* 翻后 */
+.post-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media(max-width:900px){.post-grid{grid-template-columns:1fr}}
+.sec-title{font-size:15px;font-weight:700;margin:0 0 6px}
+.sec-sub{font-size:12px;color:var(--muted);margin:0 0 16px;line-height:1.6}
+.calc-inputs{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.field{flex:1;min-width:130px}
+.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+.field input{
+  width:100%;background:#0d141c;border:1px solid var(--line);border-radius:9px;color:var(--text);
+  font:inherit;font-size:16px;font-weight:700;padding:10px 12px;outline:none;
+}
+.field input:focus{border-color:#3c7fd0;box-shadow:0 0 0 3px rgba(68,147,248,.15)}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.metric{background:#0f1721;border:1px solid #1d2937;border-radius:10px;padding:12px 13px}
+.metric span{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}
+.metric strong{font-size:22px;font-weight:800;letter-spacing:-.5px}
+.metric .f{font-size:10px;color:#6f7d8b;margin-top:5px;font-weight:500}
+.bar{height:36px;border-radius:8px;background:#161d26;overflow:hidden;display:flex;position:relative}
+.bar .seg{height:100%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;transition:width .2s}
+.bar .seg.a{background:#1f4f88}
+.bar .seg.b{background:#3a2c1f}
+.quiz{margin-top:18px;border-top:1px solid #1c2632;padding-top:16px}
+.qtext{font-size:14px;line-height:1.6;margin:0 0 14px}
+.opts{display:grid;gap:8px}
+.opt{
+  text-align:left;border:1px solid var(--line);background:#131c25;color:var(--text);
+  font:inherit;font-size:13px;padding:11px 14px;border-radius:9px;cursor:pointer;transition:.14s;
+}
+.opt:hover{border-color:#3a4b5e;background:#17222d}
+.opt.correct{border-color:#2f7a4c;background:#0f2a19}
+.opt.wrong{border-color:#7a2f30;background:#2a1314}
+.opt:disabled{cursor:default}
+.board{display:flex;gap:7px;margin-bottom:14px;flex-wrap:wrap}
+.bcard{
+  background:#f4f3ee;color:#111;border-radius:7px;padding:8px 9px;font-weight:800;font-size:17px;
+  min-width:38px;text-align:center;box-shadow:0 3px 8px rgba(0,0,0,.3);
+}
+.bcard.red{color:#b7332b}
+.qmeta{font-size:12px;color:var(--muted);margin-bottom:10px}
+.explain{margin-top:14px;font-size:13px;line-height:1.7;color:#c3ced9;background:#0f1721;border:1px solid #1d2937;border-radius:9px;padding:12px 14px;display:none}
+.explain.show{display:block}
+/* 统计 */
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+@media(max-width:700px){.stat-grid{grid-template-columns:1fr}}
+.stat{background:#0f1721;border:1px solid #1d2937;border-radius:11px;padding:15px 16px}
+.stat span{font-size:12px;color:var(--muted)}
+.stat strong{display:block;font-size:28px;font-weight:800;margin-top:6px;letter-spacing:-.6px}
+.stat em{font-style:normal;font-size:12px;color:#7f8c99;margin-left:6px}
+.rows{display:grid;gap:11px}
+.row{display:grid;grid-template-columns:110px 1fr 64px;gap:11px;align-items:center;font-size:12px}
+.row .track{height:8px;border-radius:4px;background:#1a2430;overflow:hidden}
+.row .fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#2f7a4c,#3fb950);transition:width .25s}
+.row .num{text-align:right;color:var(--muted)}
+.wrong-list{display:grid;gap:8px;margin-top:10px}
+.wrong-item{font-size:12px;color:#c3ced9;background:#131c25;border:1px solid #1d2937;border-radius:8px;padding:9px 12px;line-height:1.55}
+.wrong-item .w{color:#f0a09a}
+.empty{color:#6f7d8b;font-size:12px;padding:8px 0}
+.note{margin-top:14px;font-size:11px;color:#6b7885;line-height:1.65;border-top:1px solid #1c2632;padding-top:10px}
+// 风格测评
+.qz-wrap{max-width:780px;margin:0 auto}
+.qz-meta{font-size:12px;color:var(--muted);line-height:1.7}
+.qz-progress{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:8px}
+.qz-track{height:6px;border-radius:3px;background:#1a2430;overflow:hidden;margin-bottom:26px}
+.qz-track i{display:block;height:100%;width:0;background:linear-gradient(90deg,#2f7a4c,#3fb950);transition:width .22s}
+.qz-q{font-size:17px;font-weight:700;line-height:1.7;margin:0 0 22px;min-height:58px}
+.qz-tag{display:inline-block;font-size:11px;font-weight:700;color:#9fe0b1;background:#16341f;border:1px solid #245a33;border-radius:6px;padding:2px 8px;margin-right:8px;vertical-align:2px}
+.qz-opts{display:grid;gap:9px}
+.qz-opt{
+  display:flex;align-items:center;gap:12px;text-align:left;
+  border:1px solid var(--line);background:#131c25;color:var(--text);
+  font:inherit;font-size:14px;padding:13px 16px;border-radius:10px;cursor:pointer;transition:.14s;
+}
+.qz-opt:hover{border-color:#3a4b5e;background:#17222d}
+.qz-opt.on{border-color:#3c7fd0;background:#14243a}
+.qz-opt .dot{width:15px;height:15px;border-radius:50%;border:1.5px solid #4a5a6b;flex:0 0 auto}
+.qz-opt.on .dot{border-color:#4493f8;background:#4493f8;box-shadow:inset 0 0 0 3px #14243a}
+.qz-nav{display:flex;justify-content:space-between;align-items:center;margin-top:24px;border-top:1px solid #1c2632;padding-top:16px}
+.qz-result{text-align:center}
+.qz-hero{font-size:62px;line-height:1.1;margin-bottom:8px}
+.qz-name{font-size:26px;font-weight:800;margin:0}
+.qz-sub{color:var(--muted);font-size:13px;margin:8px 0 16px}
+.qz-match{display:inline-block;font-size:11px;font-weight:700;color:#0a0e13;background:#f0c674;border-radius:999px;padding:4px 12px}
+.qz-dims{display:grid;gap:13px;margin:26px auto 0;max-width:540px;text-align:left}
+.qz-dim{font-size:12px}
+.qz-dim .t{display:flex;justify-content:space-between;gap:10px;color:var(--muted);margin-bottom:6px}
+.qz-dim .t b{color:var(--text);font-weight:600}
+.qz-dim .tr{height:8px;border-radius:4px;background:#1a2430;overflow:hidden}
+.qz-dim .tr i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#2f7a4c,#3fb950);transition:width .3s}
+.qz-top{display:grid;gap:9px;margin:24px auto 0;max-width:540px}
+.qz-top .hd{font-size:11px;color:#6b7885;text-align:left;margin-bottom:2px}
+.qz-top .it{display:grid;grid-template-columns:96px 1fr 38px;gap:10px;align-items:center;font-size:12px;color:var(--muted)}
+.qz-top .it .tr{height:6px;border-radius:3px;background:#1a2430;overflow:hidden}
+.qz-top .it .tr i{display:block;height:100%;border-radius:3px;background:#4493f8}
+.qz-top .it .pct{text-align:right;font-variant-numeric:tabular-nums}
+.qz-advice{max-width:540px;margin:24px auto 0;font-size:13px;line-height:1.8;color:#c3ced9;background:#0f1721;border:1px solid #1d2937;border-radius:10px;padding:13px 16px;text-align:left}
+// 胜率计算器
+.eq-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,420px);gap:16px;align-items:start}
+@media(max-width:900px){.eq-grid{grid-template-columns:1fr}}
+.eq-select{background:#0d141c;border:1px solid var(--line);border-radius:9px;color:var(--text);font:inherit;font-size:14px;font-weight:700;padding:9px 10px;outline:none;width:100%;cursor:pointer}
+.eq-select:focus{border-color:#3c7fd0;box-shadow:0 0 0 3px rgba(68,147,248,.15)}
+.eq-lbl{display:block;font-size:12px;color:var(--muted);margin-bottom:7px}
+.eq-board{display:flex;gap:7px;flex-wrap:wrap}
+.eq-board .eq-select{width:76px;text-align:center}
+.eq-count{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.eq-count span{min-width:44px;text-align:center}
+.eq-players{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}
+@media(max-width:560px){.eq-players{grid-template-columns:1fr}}
+.eq-player{background:#0f1721;border:1px solid #1d2937;border-radius:10px;padding:11px 12px}
+.eq-player .hd{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:8px}
+.eq-player .cards{display:flex;gap:8px}
+.eq-player .eq-select{text-align:center}
+.eq-bar{height:6px;border-radius:3px;background:#1a2430;overflow:hidden;margin-top:10px}
+.eq-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#2f7a4c,#3fb950);transition:width .18s}
+.eq-results{display:grid;gap:9px}
+.eq-res{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#0f1721;border:1px solid #1d2937;border-radius:10px;padding:11px 13px}
+.eq-res .who{font-size:12px;color:#8fa0af;line-height:1.6;letter-spacing:.4px}
+.eq-res .who b{display:block;color:var(--text);font-size:13px;letter-spacing:0}
+.eq-res .val{text-align:right;white-space:nowrap}
+.eq-res .val strong{font-size:22px;font-weight:800;letter-spacing:-.5px;color:#c5ec8a}
+.eq-res .val span{display:block;font-size:11px;color:var(--muted)}
+// 听牌赔率
+.odds-row{cursor:pointer;transition:background .12s}
+.odds-row:hover{background:#16202b}
+// 德州教学
+.learn-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media(max-width:900px){.learn-grid{grid-template-columns:1fr}}
+.lb{margin:0 0 20px}
+.lb:last-child{margin-bottom:0}
+.lb h4{font-size:13px;margin:0 0 8px;color:#9fb0c0;letter-spacing:.2px}
+.lb p{margin:0 0 8px;font-size:13px;line-height:1.85;color:#c3ced9}
+.lb ul,.lb ol{margin:0;padding-left:18px;font-size:13px;line-height:1.85;color:#c3ced9}
+.lb li{margin-bottom:5px}
+.lb b{color:var(--text)}
+.rank-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px}
+.rank-table td{border-bottom:1px solid #1c2632;padding:6px 8px;color:#c3ced9;vertical-align:top;line-height:1.6}
+.rank-table td:first-child{color:#f0c674;font-weight:700;white-space:nowrap;width:82px}
+.hand-table{display:grid;grid-template-columns:repeat(13,1fr);gap:2px;margin-top:8px}
+.hand-table .hc{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:3px;font-size:clamp(6px,.95vw,10px);font-weight:600;letter-spacing:-.2px}
+.tier-S{background:#a8322c;color:#fff}
+.tier-A{background:#8f6a2e;color:#fff}
+.tier-B{background:#2f6a4a;color:#e6f6ec}
+.tier-C{background:#26456b;color:#dbeaff}
+.tier-D{background:#161d26;color:#4a5666}
+.tier-legend{display:flex;flex-wrap:wrap;gap:10px 14px;margin-top:11px;font-size:11px;color:var(--muted)}
+.tier-legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.gloss{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:12.5px;line-height:1.7;margin:0}
+.gloss dt{color:#f0c674;font-weight:700;white-space:nowrap}
+.gloss dd{margin:0;color:#c3ced9}
+.tips{margin:0;padding-left:20px;font-size:13px;line-height:1.9;color:#c3ced9}
+.tips li{margin-bottom:9px}
+.tips b{color:var(--text)}
+// 模拟对局
+.tabs{flex-wrap:wrap}
+.sim-row{display:flex;align-items:flex-start;gap:14px;margin-bottom:16px;flex-wrap:wrap}
+.sim-label{font-size:13px;color:var(--muted);min-width:64px;padding-top:8px}
+.sim-count{display:flex;gap:6px;flex-wrap:wrap}
+.cbtn{border:1px solid var(--line);background:#131c25;color:var(--muted);font:inherit;font-size:13px;font-weight:700;width:38px;height:34px;border-radius:8px;cursor:pointer;transition:.15s}
+.cbtn:hover{color:var(--text);border-color:#3a4b5e}
+.cbtn.active{background:#173d2a;border-color:#2f7a4c;color:#9fe0b1}
+.style-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:9px;flex:1;min-width:260px}
+.style-item{background:#131c25;border:1px solid var(--line);border-radius:10px;padding:9px 11px}
+.style-item .slot{font-size:11px;color:var(--muted);margin-bottom:6px}
+.style-item select{width:100%;background:#0d141c;color:var(--text);border:1px solid var(--line);border-radius:7px;font:inherit;font-size:13px;font-weight:600;padding:7px 8px;outline:none;cursor:pointer}
+.style-item .sdesc{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5;min-height:32px}
+.sim-topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.table-wrap{position:relative;width:100%;max-width:960px;margin:0 auto 10px;padding:0 2px 14px}
+.table-oval{position:relative;width:100%;aspect-ratio:16/9;min-height:330px}
+.table-outer{position:absolute;inset:5% 1.5%;border-radius:50%;background:linear-gradient(160deg,#7a5537,#4a2f1c 52%,#2a1a0f);box-shadow:0 22px 46px rgba(0,0,0,.55),inset 0 2px 0 rgba(255,255,255,.10),inset 0 -4px 0 rgba(0,0,0,.45)}
+.table-felt{position:absolute;inset:9% 5%;border-radius:50%;background:radial-gradient(ellipse at 50% 34%,#23745a 0%,#155640 56%,#0a3023 100%);box-shadow:inset 0 0 70px rgba(0,0,0,.6),inset 0 0 0 2px rgba(0,0,0,.35)}
+.seats{position:absolute;inset:0;pointer-events:none}
+.seat{position:absolute;transform:translate(-50%,-50%);width:112px;pointer-events:auto;background:linear-gradient(180deg,rgba(12,24,19,.95),rgba(6,13,10,.95));border:1px solid #2b5a45;border-radius:12px;padding:6px 7px;transition:.18s;box-shadow:0 8px 20px rgba(0,0,0,.45)}
+.seat.hero-seat{width:124px;border-color:#b3924a}
+.seat.acting{border-color:#f0c674;box-shadow:0 0 16px rgba(240,198,116,.45)}
+.seat.folded{opacity:.4}
+.seat.fold-anim{animation:foldSeat .45s ease}
+.seat.fold-anim .sim-card,.seat.fold-anim .slot-empty{animation:foldCards .45s ease forwards}
+.fold-stamp{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;border-radius:12px;background:rgba(8,12,16,.55);color:#ff8b83;font-size:14px;font-weight:800;letter-spacing:2px;pointer-events:none;animation:foldStamp .5s ease forwards}
+@keyframes foldSeat{
+  0%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  55%{opacity:.85;transform:translate(-50%,-50%) scale(.94)}
+  100%{opacity:.4;transform:translate(-50%,-50%) scale(.9)}
+}
+@keyframes foldCards{
+  0%{opacity:1;transform:none}
+  100%{opacity:0;transform:translateY(16px) rotate(8deg)}
+}
+@keyframes foldStamp{
+  0%{opacity:0;transform:scale(1.45) rotate(-12deg)}
+  45%{opacity:1;transform:scale(.95) rotate(-8deg)}
+  100%{opacity:0;transform:scale(1.02) rotate(-6deg)}
+}
+.seat.winner{border-color:#3fb950;box-shadow:0 0 18px rgba(63,185,80,.45)}
+.seat-top{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700}
+.seat-top .avatar{width:22px;height:22px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;background:var(--sc,#7c8b99);color:#08120d;font-size:10px;font-weight:800;overflow:hidden}
+.seat-top .avatar.emoji{background:#0b141c;border:1.5px solid var(--sc,#7c8b99);font-size:13px;line-height:1;font-family:"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif;font-weight:400}
+.seat-top .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seat-top .pos{font-size:9px;color:#9fe0b1;background:#16341f;border:1px solid #245a33;border-radius:5px;padding:1px 4px;font-weight:600;flex:0 0 auto}
+.seat-cards{display:flex;justify-content:center;gap:3px;margin:5px 0 4px;min-height:38px}
+.seat-bot{display:flex;justify-content:space-between;align-items:center;gap:4px;font-size:10px;color:var(--muted)}
+.seat-bot .stk{color:#f0c674;font-weight:700;font-size:11px}
+.seat-bot .act{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:58px;text-align:right}
+.seat-bet{font-size:10px;color:#f0c674;min-height:14px;margin-top:3px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seat-bet:not(:empty){background:rgba(0,0,0,.3);border-radius:6px;padding:1px 4px}
+.felt-center{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:62%;max-width:580px;text-align:center;pointer-events:none}
+.pot-line{display:flex;justify-content:center;align-items:center;gap:10px;margin-bottom:10px}
+.pot-label{font-size:11px;color:#9fe0b1;letter-spacing:1px}
+#simPot{font-size:22px;font-weight:800;color:#f0c674}
+.street-tag{font-size:11px;color:#cfe6d9;background:rgba(0,0,0,.3);border:1px solid #2b5a45;padding:2px 8px;border-radius:999px}
+.board{display:flex;justify-content:center;gap:8px;min-height:66px;margin-bottom:4px;flex-wrap:wrap}
+.sim-card{width:44px;height:62px;border-radius:7px;background:#f4f3ee;color:#111;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;box-shadow:0 4px 12px rgba(0,0,0,.35),inset 0 0 0 1px #d9d5c8;line-height:1}
+.sim-card .cr{font-size:19px}
+.sim-card .cs{font-size:17px;margin-top:2px}
+.sim-card.red{color:#b7332b}
+.sim-card.small{width:27px;height:38px;border-radius:5px}
+.sim-card.small .cr{font-size:13px}
+.sim-card.small .cs{font-size:11px}
+.sim-card.back{background:repeating-linear-gradient(135deg,#1b3a56 0 6px,#16304a 6px 12px);color:#7fa8cc;font-size:16px;border:1px solid #28516f;box-shadow:none}
+.sim-card.small.back{font-size:12px}
+.slot-empty{width:44px;height:62px;border-radius:7px;border:1px dashed #2b5a45;background:rgba(0,0,0,.12)}
+.slot-empty.sm{width:27px;height:38px;border-radius:5px}
+.hero-seat .sim-card.small{width:31px;height:43px}
+.hero-seat .sim-card.small .cr{font-size:15px}
+.hero-seat .sim-card.small .cs{font-size:13px}
+.hero-seat .slot-empty.sm{width:31px;height:43px}
+.hero-panel{padding:14px 16px}
+.hero-head{display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:8px}
+.pos-tag{font-size:10px;color:#9fe0b1;background:#16341f;border:1px solid #245a33;border-radius:5px;padding:2px 6px;margin-left:7px}
+.hero-stack{color:var(--muted);font-size:12px}
+.hero-stack b{color:#f0c674;font-size:15px}
+.act-empty{font-size:12px;color:var(--muted);padding:10px 0}
+.act-line{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.act-line input[type=range]{flex:1;min-width:150px;accent-color:#1f6feb}
+.raise-val{font-size:15px;font-weight:800;color:#f0c674;min-width:52px;text-align:right}
+.preset{font-size:11px;padding:5px 9px;border-radius:7px;border:1px solid var(--line);background:#131c25;color:var(--muted);cursor:pointer;font:inherit}
+.preset:hover{color:var(--text);border-color:#3a4b5e}
+.act-btns{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.gto-box{margin-top:12px;background:#0f1721;border:1px solid #1d2937;border-left:3px solid #d29922;border-radius:9px;padding:11px 13px;font-size:12px;line-height:1.75;color:#c3ced9;display:none}
+.gto-box.show{display:block}
+.gto-box .g-title{font-size:12px;font-weight:700;color:#f0c674;margin-bottom:4px}
+.gto-box .g-meta{color:#8b98a5;font-size:11px}
+.gto-box .g-opts{margin:7px 0;display:grid;gap:3px}
+.gto-box .g-opts span{color:#e6edf3}
+.gto-box .g-reason{margin-top:5px}
+.gto-box .g-note{color:#6f7d8b;font-size:11px;margin-top:7px;border-top:1px solid #1c2632;padding-top:6px}
+.log-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.sim-log{max-height:200px;overflow-y:auto;font-size:12px;line-height:1.7;color:#c3ced9;display:flex;flex-direction:column;gap:3px}
+.sim-log .l{color:#8b98a5}
+.sim-log .hl{color:#f0c674}
+.sim-log .win{color:#9fe0b1}
+@media(max-width:700px){
+  .table-oval{aspect-ratio:4/3;min-height:300px}
+  .table-outer{inset:4% 1%}
+  .table-felt{inset:8% 3.5%}
+  .seat{width:82px;padding:4px 5px;border-radius:9px}
+  .seat.hero-seat{width:94px}
+  .seat-top{font-size:9px;gap:3px}
+  .seat-top .avatar{width:16px;height:16px;font-size:8px}
+  .seat-top .avatar.emoji{font-size:10px}
+  .seat-top .pos{font-size:8px;padding:0 3px}
+  .seat-cards{min-height:30px;gap:2px;margin:3px 0}
+  .sim-card.small{width:22px;height:30px}
+  .sim-card.small .cr{font-size:10px}
+  .sim-card.small .cs{font-size:9px}
+  .slot-empty.sm{width:22px;height:30px}
+  .hero-seat .sim-card.small{width:25px;height:34px}
+  .hero-seat .slot-empty.sm{width:25px;height:34px}
+  .seat-bot{font-size:9px}
+  .seat-bot .stk{font-size:10px}
+  .seat-bot .act{max-width:44px}
+  .seat-bet{font-size:9px}
+  .felt-center{width:72%;top:42%}
+  #simPot{font-size:18px}
+  .board{gap:5px;min-height:50px}
+  .board .sim-card{width:32px;height:46px}
+  .board .sim-card .cr{font-size:14px}
+  .board .sim-card .cs{font-size:12px}
+  .board .slot-empty{width:32px;height:46px}
+  .seats.many .seat{width:60px;padding:3px 4px}
+  .seats.many .seat .nm{display:none}
+  .seats.many .seat .seat-cards{min-height:26px;margin:3px 0}
+  .seats.many .seat .sim-card.small{width:18px;height:25px}
+  .seats.many .seat .sim-card.small .cr{font-size:9px}
+  .seats.many .seat .sim-card.small .cs{font-size:8px}
+  .seats.many .seat .seat-bet{display:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1>策略训练与概率计算软件<span class="badge">V1.0</span></h1>
+      <p>翻前为 6-max 标准图表 · 100bb 现金局 · 无前注 &nbsp;|&nbsp; 翻前训练 + 翻后计算 + 2–8 人模拟</p>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="pre">翻前训练</button>
+      <button class="tab" data-tab="post">翻后训练</button>
+      <button class="tab" data-tab="odds">听牌赔率</button>
+      <button class="tab" data-tab="equity">胜率计算</button>
+      <button class="tab" data-tab="sim">模拟对局</button>
+      <button class="tab" data-tab="quiz">风格测评</button>
+      <button class="tab" data-tab="learn">德州教学</button>
+      <button class="tab" data-tab="stats">学习统计</button>
+    </div>
+  </header>
+
+  <!-- ============ 翻前训练 ============ -->
+  <section class="panel active" id="panel-pre">
+    <div class="chips" id="scenarioChips"></div>
+    <p class="small" style="margin:-8px 0 14px">本页固定为 6-max（6 人桌）标准图表 · 与「模拟对局」里选择的桌型人数无关</p>
+    <div class="pre-grid">
+      <div class="card">
+        <h2 class="scene-title" id="sceneTitle">—</h2>
+        <p class="scene-desc" id="sceneDesc">—</p>
+        <div class="holecards" id="holecards"></div>
+        <div class="nota" id="handNota"></div>
+        <div class="actions" id="actionBtns"></div>
+        <div class="feedback" id="preFeedback"></div>
+        <div class="toolbar">
+          <span class="small" id="progressText">—</span>
+          <button class="btn ghost" id="nextPre" style="padding:9px 16px;font-size:13px">下一题 →</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="matrix-head">
+          <h3>13×13 手牌矩阵</h3>
+          <button class="btn ghost" id="revealBtn" style="padding:6px 12px;font-size:12px">揭示范围</button>
+        </div>
+        <div class="matrix" id="matrix"></div>
+        <div class="legend">
+          <span><i class="r"></i>加注 / 3-Bet</span>
+          <span><i class="c"></i>跟注</span>
+          <span><i class="f"></i>弃牌</span>
+        </div>
+        <div class="width-row" id="widthRow"></div>
+        <div class="note">范围整理自公开的 6-max 100bb 现金局标准图表框架，本页固定 6 人桌，与模拟对局人数无关；7–8 人桌游玩时，前位开牌应按本表再收紧。边界手牌做了简化，真实 GTO 中部分手牌为混合频率。本工具用于建立范围直觉，不是精确 solver 输出。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 翻后训练 ============ -->
+  <section class="panel" id="panel-post">
+    <div class="post-grid">
+      <div class="card">
+        <h3 class="sec-title">MDF / Alpha 计算器</h3>
+        <p class="sec-sub">面对下注时，整体范围要防守多少比例，才不会被任意诈唬自动获利。</p>
+        <div class="calc-inputs">
+          <div class="field"><label>底池 P（下注前）</label><input id="calcPool" type="number" min="1" step="1" value="50"></div>
+          <div class="field"><label>对手下注 B</label><input id="calcBet" type="number" min="1" step="1" value="33"></div>
+        </div>
+        <div class="metrics">
+          <div class="metric"><span>MDF 最小防守频率</span><strong id="mMdf">—</strong><div class="f">P / (P + B)</div></div>
+          <div class="metric"><span>Alpha 诈唬盈亏平衡</span><strong id="mAlpha">—</strong><div class="f">B / (P + B)</div></div>
+          <div class="metric"><span>跟注所需胜率</span><strong id="mEq">—</strong><div class="f">B / (P + 2B)</div></div>
+          <div class="metric"><span>跟注赔率</span><strong id="mOdds">—</strong><div class="f">B : (P + B)</div></div>
+        </div>
+        <div class="bar"><div class="seg a" id="barDefend">防守</div><div class="seg b" id="barFold">弃牌</div></div>
+        <div class="note">MDF 是“整个范围”的防守比例，不是单手持牌必须跟注。河牌圈没有后续街时最严格；翻牌、转牌还要考虑后续下注与实现权益。</div>
+      </div>
+      <div class="card">
+        <h3 class="sec-title">频率计算练习</h3>
+        <p class="sec-sub">给出底池与下注，选出正确的 MDF。</p>
+        <div id="calcQuizArea"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 class="sec-title">牌面策略判断</h3>
+      <p class="sec-sub">BTN vs BB 单次加注底池，你是翻前加注方，判断持续下注（c-bet）频率。答案为公开教学共识的区间参考，实际频率会随下注尺度与双方范围变化。</p>
+      <div id="postQuizArea"></div>
+    </div>
+  </section>
+
+  <!-- ============ 听牌赔率 ============ -->
+  <section class="panel" id="panel-odds">
+    <div class="eq-grid">
+      <div class="card">
+        <h3 class="sec-title">听牌赔率速查器</h3>
+        <p class="sec-sub">点选常见听牌或手动输入 Outs 数量，立即显示各条街的成牌概率与所需底池赔率。</p>
+        <div class="chips" id="oddsQuick"></div>
+        <div class="calc-inputs">
+          <div class="field">
+            <label for="oddsOuts">Outs 数量（1–20）</label>
+            <input type="number" id="oddsOuts" min="1" max="20" value="9">
+          </div>
+        </div>
+        <div class="metrics" style="grid-template-columns:1fr 1fr">
+          <div class="metric"><span>翻牌圈 → 转牌圈</span><strong id="odTurn">—</strong><div class="f" id="odTurnF"></div></div>
+          <div class="metric"><span>转牌圈 → 河牌圈</span><strong id="odRiver">—</strong><div class="f" id="odRiverF"></div></div>
+          <div class="metric"><span>翻牌圈 → 河牌圈</span><strong id="odBoth">—</strong><div class="f" id="odBothF"></div></div>
+          <div class="metric"><span>所需最低底池赔率</span><strong id="odPo">—</strong><div class="f" id="odPoF"></div></div>
+        </div>
+        <div class="explain show">
+          <b>「2 倍法则」速记</b>：每张 Out 在翻牌圈约值 2%（到转牌），转牌圈约值 2%（到河牌），翻牌圈同时看两条街约值 4%。
+          例如 9 张 Outs ≈ 转牌 18% / 河牌 18% / 翻牌圈到河牌圈 36%。<br>
+          <span style="color:var(--muted)">注意：4% 法则只在翻牌圈同时看转河两条街时成立；只看一条街时用 2%。</span>
+        </div>
+        <div class="note">翻牌圈剩 47 张未知牌，转牌圈剩 46 张。「所需底池赔率」按纯数学直接计算，实战中隐含赔率（成牌后还能赢多少）允许你适当放宽跟注尺度。</div>
+      </div>
+      <div class="card">
+        <h3 class="sec-title">9 种常见听牌对照</h3>
+        <p class="sec-sub">点击任意一行，自动填入左侧计算器。</p>
+        <div id="oddsTable"></div>
+        <div class="note">组合听牌的 Outs 已扣除重复计算（如「同花+卡顺」= 9 + 4 − 1）。15 张以上的「怪兽听牌」在翻牌圈通常已是胜率过半的强听牌，很多时候该主动加注而非跟注。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 胜率计算器 ============ -->
+  <section class="panel" id="panel-equity">
+    <div class="eq-grid">
+      <div class="card">
+        <h3 class="sec-title">胜率计算器</h3>
+        <p class="sec-sub">设置每位玩家的手牌与已知公共牌，用蒙特卡洛模拟算摊牌胜率与底池权益。手牌设为「未知」时按随机发牌处理。</p>
+        <div class="calc-inputs">
+          <div class="field">
+            <label for="eqPhase">牌局阶段</label>
+            <select id="eqPhase" class="eq-select">
+              <option value="0">翻牌前 · 0 张公共牌</option>
+              <option value="3">翻牌后 · 3 张公共牌</option>
+              <option value="4">转牌后 · 4 张公共牌</option>
+              <option value="5">河牌后 · 5 张公共牌</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="eqIters">模拟次数</label>
+            <select id="eqIters" class="eq-select">
+              <option value="10000">10,000 次 · 快</option>
+              <option value="20000" selected>20,000 次 · 标准</option>
+              <option value="50000">50,000 次 · 更准</option>
+              <option value="100000">100,000 次 · 最准</option>
+            </select>
+          </div>
+        </div>
+        <div class="lb" id="eqBoardWrap" style="display:none">
+          <span class="eq-lbl">已知公共牌</span>
+          <div class="eq-board" id="eqBoard"></div>
+        </div>
+        <div class="matrix-head" style="margin-top:6px">
+          <h3>玩家与手牌</h3>
+          <div class="eq-count">
+            <button class="btn ghost" id="eqMinus" style="padding:6px 12px">−</button>
+            <span id="eqCount">2 人</span>
+            <button class="btn ghost" id="eqPlus" style="padding:6px 12px">+</button>
+          </div>
+        </div>
+        <div class="eq-players" id="eqPlayers"></div>
+        <div class="actions" style="margin-top:16px">
+          <button class="btn call" id="eqGo">计算胜率</button>
+          <button class="btn ghost" id="eqRandom">随机发牌</button>
+        </div>
+        <div class="feedback bad" id="eqError"></div>
+        <div class="note">胜率通过随机补齐未知手牌与公共牌模拟得出；平局时底池按赢家人数均分。次数越多越稳定，但始终是估算值，不是精确解。</div>
+      </div>
+      <div class="card">
+        <h3 class="sec-title">模拟结果</h3>
+        <p class="sec-sub" id="eqSummary">还没有计算。设置好手牌后点「计算胜率」。</p>
+        <div class="eq-bar" id="eqBarWrap" style="display:none"><i id="eqBar"></i></div>
+        <div class="eq-results" id="eqResults"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 模拟对局 ============ -->
+  <section class="panel" id="panel-sim">
+    <div class="card" id="simSetup">
+      <h3 class="sec-title">模拟对局设置</h3>
+      <p class="sec-sub">先选桌型人数（含你自己），再给每个对手选风格。支持 2–8 人桌，人机是风格化对手，不是 GTO 求解器。</p>
+      <div class="sim-row">
+        <span class="sim-label">桌型人数</span>
+        <div class="sim-count" id="simCount"></div>
+        <span class="small" id="simTableHint">含你 · 默认 6 人桌</span>
+      </div>
+      <div class="sim-row">
+        <span class="sim-label">对手风格</span>
+        <div class="style-grid" id="simStyles"></div>
+      </div>
+      <div style="margin-top:6px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn call" id="simStart">开始对局</button>
+        <button class="btn ghost" id="simRandom" style="font-size:13px;padding:11px 16px">随机风格</button>
+      </div>
+      <div class="note">盲注 5/10，每人 1000 筹码（100bb）。桌型可在 2–8 人之间选择，默认 6 人桌。输光自动补码到 1000，净收益单独统计。AI 底牌隐藏，摊牌时公开；无抽水、无真钱。</div>
+    </div>
+
+    <div id="simGame" style="display:none">
+      <div class="sim-topbar">
+        <div class="small" id="simMeta">—</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+          <button class="btn ghost" id="simMusicBtn" style="font-size:12px;padding:7px 12px">音乐：开</button>
+          <button class="btn ghost" id="simVoiceBtn" style="font-size:12px;padding:7px 12px">语音：开</button>
+          <button class="btn ghost" id="simSpeedBtn" style="font-size:12px;padding:7px 12px">速度：正常</button>
+          <button class="btn ghost" id="simQuit" style="font-size:12px;padding:7px 12px">退出对局</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-oval">
+          <div class="table-outer"></div>
+          <div class="table-felt"></div>
+          <div class="seats" id="simSeats"></div>
+          <div class="felt-center">
+            <div class="pot-line"><span class="pot-label">底池</span><span id="simPot">0</span><span class="street-tag" id="simStreet">翻牌前</span></div>
+            <div class="board" id="simBoard"></div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-panel card" id="simHeroPanel">
+        <div class="hero-head">
+          <div><strong>你</strong><span class="pos-tag" id="simHeroPos">—</span></div>
+          <div class="hero-stack">筹码 <b id="simHeroStack">1000</b><span class="small" id="simHeroBet"></span></div>
+        </div>
+        <div id="simActions"></div>
+        <div class="gto-box" id="simGtoBox"></div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="log-head"><h3 class="sec-title" style="margin:0">牌局记录</h3><span class="small" id="simLogHint"></span></div>
+        <div class="sim-log" id="simLog"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 风格测评 ============ -->
+  <section class="panel" id="panel-quiz">
+    <div class="card qz-wrap">
+      <div id="qzIntro">
+        <h2 class="scene-title">你是哪种牌桌动物？</h2>
+        <p class="scene-desc">40 道题：30 道自评 + 10 个具体牌局决策，按第一反应作答，没有正确答案。系统会算出你在「紧度 / 主动性 / 诈唬 / 纪律」四个维度上的倾向，再匹配最接近的牌桌风格。</p>
+        <div class="qz-meta">七种风格：石头 · 乌龟 · 大象 · 胡狼 · 狮子 · 鲨鱼 · 老鹰</div>
+        <div class="actions" style="margin-top:20px">
+          <button class="btn call" id="qzStart">开始测评</button>
+        </div>
+        <p class="small" id="qzLast" style="margin-top:14px"></p>
+        <div class="note">测评只反映你勾选时的自评倾向，用来对照打法，不是技术评级，也不代表长期风格。</div>
+      </div>
+      <div id="qzBody" style="display:none"></div>
+    </div>
+  </section>
+
+  <!-- ============ 德州教学 ============ -->
+  <section class="panel" id="panel-learn">
+    <div class="learn-grid">
+      <div class="card">
+        <h3 class="sec-title">玩法规则</h3>
+        <p class="sec-sub">从发牌到摊牌的完整流程，以及最常见的规则误解。</p>
+        <div class="lb">
+          <h4>一局怎么开始</h4>
+          <p>每人先放盲注（本工具模拟局为 5/10），再发两张底牌。桌上按位置顺时针行动，依次经过 <b>翻牌前 → 翻牌（3 张）→ 转牌（1 张）→ 河牌（1 张）→ 摊牌</b>。每条街结束前，还在局里的玩家投入的筹码必须相等。</p>
+        </div>
+        <div class="lb">
+          <h4>你能做的六个动作</h4>
+          <ul>
+            <li><b>过牌 Check</b>：前面没人下注时，免费把行动权交给下一位。</li>
+            <li><b>下注 Bet</b>：第一个往底池里放筹码。</li>
+            <li><b>加注 Raise</b>：在别人下注的基础上再加。</li>
+            <li><b>跟注 Call</b>：补齐到当前下注额。</li>
+            <li><b>弃牌 Fold</b>：放弃这手牌，已投入的筹码拿不回来。</li>
+            <li><b>全下 All-in</b>：把剩余筹码一次性推入。</li>
+          </ul>
+        </div>
+        <div class="lb">
+          <h4>怎么赢</h4>
+          <p>只有两种方式：<b>摊牌时牌最大</b>，或者<b>让所有人都弃牌</b>。所以下注只有两个真实目的——让更差的牌跟（价值），或让更好的牌弃（诈唬）。既做不到前者也做不到后者的下注，就是白送筹码。</p>
+        </div>
+        <div class="lb">
+          <h4>牌型大小（从大到小）</h4>
+          <table class="rank-table">
+            <tr><td>皇家同花顺</td><td>同一花色的 A-K-Q-J-T</td></tr>
+            <tr><td>同花顺</td><td>同一花色的连续五张</td></tr>
+            <tr><td>四条</td><td>四张同点数，如四个 7</td></tr>
+            <tr><td>葫芦</td><td>三条 + 一对</td></tr>
+            <tr><td>同花</td><td>同一花色，不要求连续</td></tr>
+            <tr><td>顺子</td><td>五种点数连续；A 可当 1 用，A-2-3-4-5 是最小顺子</td></tr>
+            <tr><td>三条</td><td>三张同点数</td></tr>
+            <tr><td>两对</td><td>两个不同点数的对子</td></tr>
+            <tr><td>一对</td><td>两张同点数</td></tr>
+            <tr><td>高牌</td><td>什么都没有，比最大的单张</td></tr>
+          </table>
+          <p style="margin-top:9px">同牌型时先比主牌，再依次比<b>踢脚（kicker）</b>：A-K 在 A-7-4 的牌面上，是用 A 带 K 踢脚赢过 A 带 Q。</p>
+        </div>
+        <div class="lb">
+          <h4>位置为什么重要</h4>
+          <p>越靠后行动，看到的信息越多。<b>BTN（按钮位）</b>翻后永远最后行动，可以用最宽的范围开牌；<b>SB / BB</b> 翻后先行动，同样的牌要打得更保守。位置带来的损失，往往比选错一手牌更大。</p>
+        </div>
+        <div class="lb">
+          <h4>边池：多人全下时怎么分</h4>
+          <p>三人全下但筹码不同时，底池会按投入额切分：每人只能赢「自己投入额 × 参与人数」那部分，多出来的筹码形成边池，只有投入更多的人能争夺。短码全下不会因为对手筹码多而多赢。</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="sec-title">起手牌力表</h3>
+        <p class="sec-sub">169 种起手牌的粗略强度分层，按 100bb、6-max 现金局整理。它给的是<b>顺序</b>，不是精确频率。</p>
+        <div class="hand-table" id="handTable"></div>
+        <div class="tier-legend">
+          <span><i class="tier-S"></i>S 级 · 无条件可打</span>
+          <span><i class="tier-A"></i>A 级 · 强牌</span>
+          <span><i class="tier-B"></i>B 级 · 可玩</span>
+          <span><i class="tier-C"></i>C 级 · 投机</span>
+          <span><i class="tier-D"></i>D 级 · 默认弃牌</span>
+        </div>
+        <div class="lb" style="margin-top:18px">
+          <h4>怎么看这张表</h4>
+          <ul>
+            <li><b>S / A 级</b>：任何位置都能加注进池；位置差时少慢打，别让翻牌过河。</li>
+            <li><b>B 级</b>：前位要收，CO / BTN 可以稳定开牌；面对加注多数直接弃。</li>
+            <li><b>C 级</b>：典型投机牌，小对子摸三条、同花连张摸听牌，靠隐含赔率赚钱，别在没位置、多人池里硬玩。</li>
+            <li><b>D 级</b>：默认弃牌。唯一例外是位置极好、对手很弱时的针对性放宽。</li>
+          </ul>
+          <p>同一手牌在不同位置结论不同：<b>K9s 在 BTN 是开牌，在 UTG 是弃牌</b>。这张表只回答「这手牌本身有多强」，位置调整去看「翻前训练」的场景题。</p>
+        </div>
+        <div class="note">分层按公开的开牌范围惯例整理，边界手牌存在混合频率；本表用于建立直觉，不是 solver 输出。</div>
+      </div>
+
+      <div class="card">
+        <h3 class="sec-title">专业术语</h3>
+        <p class="sec-sub">看懂 solver 报告、教学视频和牌局讨论所需的最小词汇量。</p>
+        <dl class="gloss" id="gloss"></dl>
+      </div>
+
+      <div class="card">
+        <h3 class="sec-title">实用技巧</h3>
+        <p class="sec-sub">十条能立刻用上的原则，按重要性排序。</p>
+        <ol class="tips" id="tips"></ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 学习统计 ============ -->
+  <section class="panel" id="panel-stats">
+    <div class="stat-grid">
+      <div class="stat"><span>翻前已答题数</span><strong id="stPreTotal">0</strong></div>
+      <div class="stat"><span>翻前正确率</span><strong id="stPreAcc">—</strong></div>
+      <div class="stat"><span>翻后正确率</span><strong id="stPostAcc">—</strong></div>
+    </div>
+    <div class="card">
+      <h3 class="sec-title">各场景正确率</h3>
+      <p class="sec-sub">按场景统计，薄弱环节会显示为较短的绿色条。</p>
+      <div class="rows" id="sceneRows"></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3 class="sec-title">最近错题</h3>
+      <div class="wrong-list" id="wrongList"></div>
+      <div style="margin-top:14px"><button class="btn ghost" id="clearStats" style="font-size:12px;padding:8px 14px">清空本地记录</button></div>
+      <div class="note">所有记录只保存在本机浏览器的 localStorage，不会上传到任何服务器。</div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+// 基础工具
+const RANKS=['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
+const RV={};
+RANKS.forEach(function(r,i){ RV[r]=14-i; });
+function rankChar(v){ return RANKS[14-v]; }
+function handAt(i,j){
+  if(i===j) return RANKS[i]+RANKS[i];
+  return i<j ? RANKS[i]+RANKS[j]+'s' : RANKS[j]+RANKS[i]+'o';
+}
+const ALL_HANDS=[];
+for(let i=0;i<13;i++){
+  for(let j=0;j<13;j++){ ALL_HANDS.push(handAt(i,j)); }
+}
+function $(sel){ return document.querySelector(sel); }
+
+/* 范围简写解析：支持 AA / AA+ / AA-BB / AKs / AKs+ / A5s-A2s */
+function expandRange(spec){
+  const out=new Set();
+  (spec||'').split(',').forEach(function(raw){
+    const t=raw.trim().replace(/\s+/g,'');
+    if(!t) return;
+    let m=t.match(/^([AKQJT98765432])\1(\+)?$/);
+    if(m){
+      const start=RV[m[1]];
+      if(m[2]){ for(let r=start;r<=14;r++){ out.add(rankChar(r)+rankChar(r)); } }
+      else { out.add(m[1]+m[1]); }
+      return;
+    }
+    m=t.match(/^([AKQJT98765432])\1-([AKQJT98765432])\2$/);
+    if(m){
+      const a=RV[m[1]], b=RV[m[2]];
+      for(let r=Math.min(a,b);r<=Math.max(a,b);r++){ out.add(rankChar(r)+rankChar(r)); }
+      return;
+    }
+    m=t.match(/^([AKQJT98765432])([AKQJT98765432])([so])(.*)$/);
+    if(!m) return;
+    const r1=m[1], r2=m[2], suit=m[3], tail=m[4];
+    let end=RV[r2];
+    if(tail==='+'){ end=RV[r1]-1; }
+    else if(/^-[AKQJT98765432][AKQJT98765432][so]$/.test(tail)){ end=RV[tail[2]]; }
+    else if(tail!==''){ return; }
+    const lo=Math.min(RV[r2],end), hi=Math.max(RV[r2],end);
+    for(let r=lo;r<=hi;r++){
+      if(r===RV[r1]) continue;
+      const other=rankChar(r);
+      const hiC = RV[r1]>r ? r1 : other;
+      const loC = RV[r1]>r ? other : r1;
+      out.add(hiC+loC+suit);
+    }
+  });
+  return out;
+}
+function combosOf(h){ return h.length===2 ? 6 : (h[2]==='s' ? 4 : 12); }
+function widthOf(set){
+  let n=0;
+  set.forEach(function(h){ n+=combosOf(h); });
+  return n/1326;
+}
+
+// 翻前场景数据
+const SCENARIOS=[
+  {
+    id:'utg', name:'UTG 开牌', type:'open', raiseLabel:'加注',
+    desc:'你在 UTG（枪口位），前面无人入池。',
+    note:'UTG 之后还有 5 人未行动，范围最紧；边缘牌直接弃掉。',
+    actions:['raise','fold'],
+    raise:'55+, A9s+, KTs+, QTs+, JTs, T9s, 98s, 87s, 76s, A5s, A4s, ATo+, KQo'
+  },
+  {
+    id:'hj', name:'HJ 开牌', type:'open', raiseLabel:'加注',
+    desc:'你在 HJ（劫持位），前面 UTG 弃牌。',
+    note:'HJ 仍要面对 CO、BTN、SB、BB 四人，范围比 UTG 略宽但依然偏紧。',
+    actions:['raise','fold'],
+    raise:'44+, A8s+, K9s+, Q9s+, J9s+, T8s+, 97s+, 87s, 76s, 65s, ATo+, KJo+, QJo'
+  },
+  {
+    id:'co', name:'CO 开牌', type:'open', raiseLabel:'加注',
+    desc:'你在 CO（截击位），前面 UTG、HJ 弃牌。',
+    note:'CO 只剩 BTN 与两个盲注在后面，可以用较宽的范围开牌并利用位置。',
+    actions:['raise','fold'],
+    raise:'22+, A2s+, K7s+, Q8s+, J8s+, T7s+, 96s+, 86s+, 75s+, 65s, 54s, A9o+, KTo+, QTo+, JTo'
+  },
+  {
+    id:'btn', name:'BTN 开牌', type:'open', raiseLabel:'加注',
+    desc:'你在 BTN（按钮位），前面全部弃牌。',
+    note:'BTN 拥有全程位置优势，开牌范围最宽；很多边缘牌靠位置实现权益。',
+    actions:['raise','fold'],
+    raise:'22+, A2s+, K2s+, Q4s+, J6s+, T6s+, 95s+, 84s+, 74s+, 63s+, 53s+, 43s, A2o+, K7o+, Q8o+, J8o+, T8o+, 98o, 87o'
+  },
+  {
+    id:'sb', name:'SB 开牌', type:'open', raiseLabel:'加注',
+    desc:'你在 SB（小盲），前面全部弃牌，只有 BB 在后。',
+    note:'SB 只有一个对手，但翻后永远没有位置。真实 GTO 会用 limp 混合，本训练简化为 raise / fold。',
+    actions:['raise','fold'],
+    raise:'22+, A2s+, K2s+, Q5s+, J7s+, T7s+, 96s+, 85s+, 75s+, 64s+, 54s, A2o+, K8o+, Q9o+, J9o+, T9o, 98o'
+  },
+  {
+    id:'btnVsUtg', name:'BTN vs UTG 开牌', type:'vs', raiseLabel:'3-Bet',
+    desc:'你在 BTN，UTG 率先加注到 2.5bb，HJ、CO 弃牌。',
+    note:'UTG 的范围很强，IP 的 3-bet 要收紧；冷跟多为能实现权益的中等牌。',
+    actions:['raise','call','fold'],
+    raise:'TT+, AQs+, AKo, A5s, KQs',
+    call:'22-99, ATs-A6s, KJs, KTs, QJs, QTs, JTs, T9s, 98s, 87s, 76s, AQo'
+  },
+  {
+    id:'coVsHj', name:'CO vs HJ 开牌', type:'vs', raiseLabel:'3-Bet',
+    desc:'你在 CO，HJ 率先加注到 2.5bb，UTG 弃牌。',
+    note:'HJ 范围比 UTG 宽，CO 可以用更多强牌 3-bet，同时保留一部分冷跟。',
+    actions:['raise','call','fold'],
+    raise:'TT+, AJs+, KQs, A5s-A4s, AQo+, KQo',
+    call:'22-99, A9s-A6s, KTs, KJs, QTs, QJs, JTs, T9s, 98s, 87s, 76s, 65s, AJo, KJo, QJo'
+  },
+  {
+    id:'bbVsBtn', name:'BB vs BTN 开牌', type:'vs', raiseLabel:'3-Bet',
+    desc:'你在 BB，BTN 率先加注到 2.5bb，SB 弃牌。',
+    note:'BB 有底池赔率且最后行动，防守范围最宽；3-bet 由强价值牌与 blocker 诈唬组成。',
+    actions:['raise','call','fold'],
+    raise:'66+, A9s+, KTs+, QTs+, JTs, A5s-A4s, KQo, AJo+, KJo, ATo',
+    call:'22-55, A8s-A2s, K8s-K2s, Q8s-Q2s, J9s-J6s, T8s-T6s, 97s-95s, 86s-84s, 75s-74s, 64s-63s, 54s-53s, 43s, A8o-A2o, K9o-K6o, Q9o-Q6o, J9o-J8o, T8o-T7o, 98o-97o'
+  },
+  {
+    id:'bbVsCo', name:'BB vs CO 开牌', type:'vs', raiseLabel:'3-Bet',
+    desc:'你在 BB，CO 率先加注到 2.5bb，BTN、SB 弃牌。',
+    note:'CO 范围比 BTN 紧，BB 的 3-bet 频率下调，但仍有大量跟注防守。',
+    actions:['raise','call','fold'],
+    raise:'TT+, AQs+, KQs, A5s-A3s, AKo, KQo',
+    call:'22-99, A9s-A2s, KTs-K3s, QTs-Q5s, JTs-J7s, T9s-T7s, 98s-96s, 87s-85s, 76s-75s, 65s, 54s, A9o-A2o, KTo-K7o, QTo-Q8o, JTo-J8o, T9o, 98o'
+  }
+];
+
+SCENARIOS.forEach(function(s){
+  s.raiseSet=expandRange(s.raise);
+  s.callSet=expandRange(s.call||'');
+  s.raiseWidth=widthOf(s.raiseSet);
+  s.callWidth=widthOf(s.callSet);
+});
+
+function getScenario(){
+  return SCENARIOS.filter(function(s){ return s.id===state.scenarioId; })[0];
+}
+function resolveAction(scn,hand){
+  if(scn.raiseSet.has(hand)) return 'raise';
+  if(scn.callSet.has(hand)) return 'call';
+  return 'fold';
+}
+
+// 本地统计
+const STORE_KEY='gto_trainer_v1';
+function defaultStats(){
+  return {pre:{total:0,correct:0,by:{}},post:{total:0,correct:0},calc:{total:0,correct:0},wrong:[]};
+}
+function loadStats(){
+  try{
+    const raw=localStorage.getItem(STORE_KEY);
+    if(raw){
+      const s=JSON.parse(raw);
+      if(s && s.pre && s.post){ return s; }
+    }
+  }catch(e){}
+  return defaultStats();
+}
+let stats=loadStats();
+function saveStats(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(stats)); }catch(e){}
+}
+function addWrong(entry){
+  stats.wrong.unshift(entry);
+  if(stats.wrong.length>40){ stats.wrong.length=40; }
+}
+
+const state={
+  scenarioId:'utg',
+  hand:null,
+  answered:false,
+  revealed:false,
+  calc:null,
+  postIdx:0,
+  postAnswered:false
+};
+
+// 手牌矩阵
+const CELLS=new Map();
+function buildMatrix(){
+  const m=$('#matrix');
+  m.innerHTML='';
+  for(let i=0;i<13;i++){
+    for(let j=0;j<13;j++){
+      const h=handAt(i,j);
+      const d=document.createElement('div');
+      d.className='cell';
+      d.textContent=h;
+      d.title=h;
+      m.appendChild(d);
+      CELLS.set(h,d);
+    }
+  }
+}
+function paintMatrix(){
+  const scn=getScenario();
+  ALL_HANDS.forEach(function(h){
+    const cell=CELLS.get(h);
+    const cls=state.revealed ? resolveAction(scn,h) : 'masked';
+    cell.className='cell '+cls;
+  });
+  if(state.hand && CELLS.has(state.hand)){
+    CELLS.get(state.hand).classList.add('active');
+  }
+}
+
+// 翻前训练
+const SUITS=[['♠',false],['♥',true],['♦',true],['♣',false]];
+function cardEl(rank,s){
+  return '<div class="pcard'+(s[1]?' red':'')+'"><span>'+rank+'</span><span class="suit">'+s[0]+'</span></div>';
+}
+function cardsHTML(hand){
+  let s1,s2;
+  if(hand.length===2){
+    const p=[0,1,2,3].sort(function(){return Math.random()-.5;});
+    s1=SUITS[p[0]]; s2=SUITS[p[1]];
+  } else if(hand[2]==='s'){
+    const idx=Math.floor(Math.random()*4);
+    s1=SUITS[idx]; s2=SUITS[idx];
+  } else {
+    const p=[0,1,2,3].sort(function(){return Math.random()-.5;});
+    s1=SUITS[p[0]]; s2=SUITS[p[1]];
+  }
+  return cardEl(hand[0],s1)+cardEl(hand[1],s2);
+}
+function labelOf(scn,a){
+  return a==='raise' ? scn.raiseLabel : (a==='call' ? '跟注' : '弃牌');
+}
+function buildChips(){
+  const box=$('#scenarioChips');
+  box.innerHTML='';
+  SCENARIOS.forEach(function(s){
+    const b=document.createElement('button');
+    b.className='chip'+(s.id===state.scenarioId?' active':'');
+    b.textContent=s.name;
+    b.dataset.id=s.id;
+    b.addEventListener('click',function(){ setScenario(s.id); });
+    box.appendChild(b);
+  });
+}
+function setScenario(id){
+  state.scenarioId=id;
+  Array.prototype.forEach.call($('#scenarioChips').children,function(c){
+    c.classList.toggle('active',c.dataset.id===id);
+  });
+  newPreQuestion();
+}
+function newPreQuestion(){
+  const scn=getScenario();
+  let h=ALL_HANDS[Math.floor(Math.random()*ALL_HANDS.length)];
+  let guard=0;
+  while(h===state.hand && guard++<10){
+    h=ALL_HANDS[Math.floor(Math.random()*ALL_HANDS.length)];
+  }
+  state.hand=h;
+  state.answered=false;
+  state.revealed=false;
+  $('#preFeedback').className='feedback';
+  $('#preFeedback').innerHTML='';
+  $('#revealBtn').textContent='揭示范围';
+  $('#revealBtn').disabled=false;
+  renderPreQuestion();
+  paintMatrix();
+}
+function renderPreQuestion(){
+  const scn=getScenario();
+  $('#sceneTitle').textContent=scn.name;
+  $('#sceneDesc').textContent=scn.desc;
+  $('#holecards').innerHTML=cardsHTML(state.hand);
+  $('#handNota').textContent='手牌记号：'+state.hand+'　·　'+(scn.type==='open'?'无人入池，轮到你行动':'面对开牌，轮到你行动');
+  const box=$('#actionBtns');
+  box.innerHTML='';
+  scn.actions.forEach(function(a){
+    const b=document.createElement('button');
+    b.className='btn '+a;
+    b.textContent=labelOf(scn,a);
+    b.addEventListener('click',function(){ answerPre(a); });
+    box.appendChild(b);
+  });
+  const w=[];
+  w.push('<span class="wpill">加注范围 <b>'+(scn.raiseWidth*100).toFixed(1)+'%</b></span>');
+  if(scn.type==='vs'){
+    w.push('<span class="wpill">跟注范围 <b>'+(scn.callWidth*100).toFixed(1)+'%</b></span>');
+  }
+  w.push('<span class="wpill">弃牌 <b>'+Math.max(0,(1-scn.raiseWidth-scn.callWidth)*100).toFixed(1)+'%</b></span>');
+  $('#widthRow').innerHTML=w.join('');
+  updateProgress();
+}
+function updateProgress(){
+  const scn=getScenario();
+  const b=stats.pre.by[scn.id]||{total:0,correct:0};
+  const acc=b.total?((b.correct/b.total*100).toFixed(0)+'%'):'—';
+  $('#progressText').textContent='本场景已答 '+b.total+' 题 · 正确率 '+acc;
+}
+function explainPre(scn,hand,correct){
+  if(scn.type==='open'){
+    if(correct==='raise'){ return '这手牌在该位置的标准开牌范围内。'+scn.note; }
+    return '这手牌不在该位置的标准开牌范围内：位置越靠前，后面未行动的玩家越多，边缘牌的权益难以实现。'+scn.note;
+  }
+  if(correct==='raise'){ return '这手牌进入 3-bet 范围：核心是强价值牌，加上少量带 blocker 的诈唬牌。'+scn.note; }
+  if(correct==='call'){ return '这手牌适合冷跟：能合理实现权益，但 3-bet 后会被对手的强范围压制。'+scn.note; }
+  return '这手牌面对该开牌范围权益不足，或受位置限制难以实现权益，直接弃牌更优。'+scn.note;
+}
+function answerPre(user){
+  if(state.answered) return;
+  const scn=getScenario(), hand=state.hand;
+  const correct=resolveAction(scn,hand);
+  const ok=user===correct;
+  state.answered=true;
+  state.revealed=true;
+  stats.pre.total++;
+  if(ok) stats.pre.correct++;
+  const b=stats.pre.by[scn.id]||(stats.pre.by[scn.id]={total:0,correct:0});
+  b.total++;
+  if(ok) b.correct++;
+  if(!ok){
+    addWrong({mode:'pre',scene:scn.name,hand:hand,user:labelOf(scn,user),correct:labelOf(scn,correct),time:Date.now()});
+  }
+  saveStats();
+  Array.prototype.forEach.call($('#actionBtns').children,function(x){ x.disabled=true; });
+  showPreFeedback(ok,user,correct,scn);
+  paintMatrix();
+  updateProgress();
+  renderStats();
+}
+function showPreFeedback(ok,user,correct,scn){
+  const f=$('#preFeedback');
+  f.className='feedback show '+(ok?'ok':'bad');
+  let html='<b>'+(ok?'✓ 正确':'✗ 这手牌应该 '+labelOf(scn,correct))+'</b>';
+  html+='<div class="sub">';
+  if(!ok){ html+='你选择了 <span class="tag '+user+'">'+labelOf(scn,user)+'</span>，'; }
+  html+='正确动作 <span class="tag '+correct+'">'+labelOf(scn,correct)+'</span></div>';
+  html+='<div class="sub">'+explainPre(scn,state.hand,correct)+'</div>';
+  f.innerHTML=html;
+}
+
+// 翻后：MDF 计算器
+function updateCalc(){
+  const P=Math.max(1,Number($('#calcPool').value)||1);
+  const B=Math.max(1,Number($('#calcBet').value)||1);
+  const mdf=P/(P+B), alpha=B/(P+B), eq=B/(P+2*B);
+  $('#mMdf').textContent=(mdf*100).toFixed(1)+'%';
+  $('#mAlpha').textContent=(alpha*100).toFixed(1)+'%';
+  $('#mEq').textContent=(eq*100).toFixed(1)+'%';
+  $('#mOdds').textContent=B+' : '+(P+B);
+  $('#barDefend').style.width=(mdf*100).toFixed(2)+'%';
+  $('#barFold').style.width=(alpha*100).toFixed(2)+'%';
+  $('#barDefend').textContent='防守 '+(mdf*100).toFixed(0)+'%';
+  $('#barFold').textContent='弃牌 '+(alpha*100).toFixed(0)+'%';
+}
+
+// 翻后：MDF 练习
+const CALC_POOLS=[20,25,30,35,40,50,60,75,100,120];
+const CALC_BETS=[10,15,20,25,30,33,40,50,66,75,100];
+function newCalcQuestion(){
+  const P=CALC_POOLS[Math.floor(Math.random()*CALC_POOLS.length)];
+  let B=CALC_BETS[Math.floor(Math.random()*CALC_BETS.length)];
+  if(B>P){ B=Math.round(P*0.66); }
+  const mdf=P/(P+B), alpha=B/(P+B), eq=B/(P+2*B);
+  const seen=new Set();
+  const vals=[];
+  [mdf,alpha,eq,Math.max(0.01,1-eq)].forEach(function(v){
+    const k=(v*100).toFixed(1);
+    if(!seen.has(k) && v>0 && v<1){ seen.add(k); vals.push(v); }
+  });
+  let guard=0;
+  while(vals.length<4 && guard++<30){
+    const v=Math.max(0.02,Math.min(0.98,mdf+(Math.random()*0.36-0.18)));
+    const k=(v*100).toFixed(1);
+    if(!seen.has(k)){ seen.add(k); vals.push(v); }
+  }
+  const opts=vals.slice(0,4).sort(function(){return Math.random()-.5;});
+  state.calc={P:P,B:B,mdf:mdf,opts:opts,answered:false};
+  renderCalcQuestion();
+}
+function renderCalcQuestion(){
+  const c=state.calc;
+  const area=$('#calcQuizArea');
+  area.innerHTML='';
+  const q=document.createElement('p');
+  q.className='qtext';
+  q.innerHTML='底池 <b>'+c.P+'</b>，对手下注 <b>'+c.B+'</b>。<br>你的最小防守频率（MDF）是多少？';
+  area.appendChild(q);
+  const box=document.createElement('div');
+  box.className='opts';
+  box.id='calcOpts';
+  c.opts.forEach(function(v){
+    const b=document.createElement('button');
+    b.className='opt';
+    b.textContent=(v*100).toFixed(1)+'%';
+    b.addEventListener('click',function(){ answerCalc(v,b); });
+    box.appendChild(b);
+  });
+  area.appendChild(box);
+  const ex=document.createElement('div');
+  ex.className='explain';
+  ex.id='calcExplain';
+  area.appendChild(ex);
+  const nw=document.createElement('div');
+  nw.style.marginTop='12px';
+  nw.innerHTML='<button class="btn ghost" id="nextCalc" style="font-size:12px;padding:8px 14px">下一题 →</button>';
+  area.appendChild(nw);
+  $('#nextCalc').addEventListener('click',newCalcQuestion);
+}
+function answerCalc(v,btn){
+  const c=state.calc;
+  if(c.answered) return;
+  c.answered=true;
+  const ok=(v*100).toFixed(1)===(c.mdf*100).toFixed(1);
+  stats.calc.total++;
+  if(ok) stats.calc.correct++;
+  if(!ok){
+    addWrong({mode:'calc',scene:'MDF 计算',hand:'P='+c.P+' B='+c.B,user:(v*100).toFixed(1)+'%',correct:(c.mdf*100).toFixed(1)+'%',time:Date.now()});
+  }
+  saveStats();
+  Array.prototype.forEach.call($('#calcQuizArea').querySelectorAll('.opt'),function(b){
+    b.disabled=true;
+    if((parseFloat(b.textContent))===Number((c.mdf*100).toFixed(1))){ b.classList.add('correct'); }
+    else if(b===btn){ b.classList.add('wrong'); }
+  });
+  const ex=$('#calcExplain');
+  ex.className='explain show';
+  ex.innerHTML='MDF = P / (P + B) = '+c.P+' / ('+c.P+' + '+c.B+') = <b>'+(c.mdf*100).toFixed(1)+'%</b>。<br>'+
+    'Alpha（对手诈唬的盈亏平衡点）= B / (P + B) = '+((c.B/(c.P+c.B))*100).toFixed(1)+'%。<br>'+
+    '跟注所需胜率 = B / (P + 2B) = '+((c.B/(c.P+2*c.B))*100).toFixed(1)+'%，这是单次跟注的赔率，不等于 MDF。';
+  renderStats();
+}
+
+// 翻后：牌面策略
+const FREQ_OPTS=['高频小注（≥70%）','中等混合（45–65%）','偏低（25–40%）','几乎全部过牌（<15%）'];
+const POST_QUESTIONS=[
+  {
+    board:'A♠ 7♦ 2♣', meta:'BTN vs BB · 单次加注底池 · 翻牌 · 你在 BTN',
+    q:'作为翻前加注方，这个牌面的持续下注频率应为？', answer:0,
+    explain:'<b>高频小注（≥70%）</b>。A 高、彩虹、无连接，对 BTN 的范围极有利，BB 几乎没有强成牌。主流策略是用 33% 左右的小注高频下注，保留少量过牌。'
+  },
+  {
+    board:'K♠ Q♠ 5♦', meta:'BTN vs BB · 单次加注底池 · 翻牌 · 你在 BTN',
+    q:'双方都大量击中，持续下注频率应为？', answer:1,
+    explain:'<b>中等混合（45–65%）</b>。KQ5 两同花面双方都击中不少，BTN 仍有范围优势但更薄，通常用小注混合频率，而不是无脑全下或全过。'
+  },
+  {
+    board:'8♠ 5♦ 2♠', meta:'BTN vs BB · 单次加注底池 · 翻牌 · 你在 BTN',
+    q:'低牌、湿润、两同花面，持续下注频率应为？', answer:2,
+    explain:'<b>偏低（25–40%）</b>。BB 的防守范围在这种低连接面权益更高，且拥有更多强听牌与坚果，BTN 应显著增加过牌。'
+  },
+  {
+    board:'T♠ 9♠ 8♦', meta:'BTN vs BB · 单次加注底池 · 翻牌 · 你在 BTN',
+    q:'高度连接的牌面，持续下注频率应为？', answer:2,
+    explain:'<b>偏低（25–40%）</b>。T98 连接面让 BB 拥有更多顺子与强听牌，坚果优势在 BB 一侧，BTN 过牌比例上升。'
+  },
+  {
+    board:'7♠ 7♦ 2♣', meta:'BTN vs BB · 单次加注底池 · 翻牌 · 你在 BTN',
+    q:'干燥的对子面，持续下注频率应为？', answer:0,
+    explain:'<b>高频小注（≥70%）</b>。对子面且极其干燥，BB 很难拿到强成牌，BTN 的范围优势明显，适合高频 33% 小注。'
+  },
+  {
+    board:'A♠ K♦ Q♣', meta:'BTN vs BB · 单次加注底池 · 翻牌 · 你在 BTN',
+    q:'高牌高度连接的牌面，持续下注频率应为？', answer:1,
+    explain:'<b>中等混合（45–65%）</b>。AKQ 让双方都保留很多强牌与顺子听牌，BTN 不能无脑高频下注，倾向更两极化的中等频率。'
+  },
+  {
+    board:'2♠ 2♦ 9♣', meta:'BTN vs BB · 单次加注底池 · 翻牌 · 你在 BTN',
+    q:'低对子、干燥面，持续下注频率应为？', answer:0,
+    explain:'<b>高频小注（≥70%）</b>。低对子干燥面 BB 很难反击，BTN 的范围优势最大，可用接近全范围的小注持续下注。'
+  },
+  {
+    board:'J♠ T♠ 7♦', meta:'BTN vs BB · 单次加注底池 · 翻牌 · 你在 BTN',
+    q:'中等连接、两同花面，持续下注频率应为？', answer:2,
+    explain:'<b>偏低（25–40%）</b>。JT7 连接面让 BB 拥有更多两对、顺子与强听牌，BTN 的坚果劣势使其更适合多过牌。'
+  }
+];
+function boardHTML(board){
+  return board.split(' ').map(function(c){
+    const suit=c.slice(-1);
+    const red=(suit==='♥'||suit==='♦');
+    return '<div class="bcard'+(red?' red':'')+'"><span>'+c.slice(0,-1)+'</span><span>'+suit+'</span></div>';
+  }).join('');
+}
+function renderPostQuestion(){
+  const q=POST_QUESTIONS[state.postIdx];
+  const area=$('#postQuizArea');
+  area.innerHTML='';
+  const bd=document.createElement('div');
+  bd.className='board';
+  bd.innerHTML=boardHTML(q.board);
+  area.appendChild(bd);
+  const meta=document.createElement('div');
+  meta.className='qmeta';
+  meta.textContent=q.meta+'　·　第 '+(state.postIdx+1)+' / '+POST_QUESTIONS.length+' 题';
+  area.appendChild(meta);
+  const qt=document.createElement('p');
+  qt.className='qtext';
+  qt.textContent=q.q;
+  area.appendChild(qt);
+  const box=document.createElement('div');
+  box.className='opts';
+  box.id='postOpts';
+  FREQ_OPTS.forEach(function(opt,i){
+    const b=document.createElement('button');
+    b.className='opt';
+    b.textContent=opt;
+    b.addEventListener('click',function(){ answerPost(i,b); });
+    box.appendChild(b);
+  });
+  area.appendChild(box);
+  const ex=document.createElement('div');
+  ex.className='explain';
+  ex.id='postExplain';
+  area.appendChild(ex);
+  const nw=document.createElement('div');
+  nw.style.marginTop='12px';
+  nw.innerHTML='<button class="btn ghost" id="nextPost" style="font-size:12px;padding:8px 14px">下一题 →</button>';
+  area.appendChild(nw);
+  $('#nextPost').addEventListener('click',function(){
+    state.postIdx=(state.postIdx+1)%POST_QUESTIONS.length;
+    state.postAnswered=false;
+    renderPostQuestion();
+  });
+}
+function answerPost(i,btn){
+  const q=POST_QUESTIONS[state.postIdx];
+  if(state.postAnswered) return;
+  state.postAnswered=true;
+  const ok=i===q.answer;
+  stats.post.total++;
+  if(ok) stats.post.correct++;
+  if(!ok){
+    addWrong({mode:'post',scene:q.board,hand:q.meta,user:FREQ_OPTS[i],correct:FREQ_OPTS[q.answer],time:Date.now()});
+  }
+  saveStats();
+  Array.prototype.forEach.call($('#postOpts').children,function(b,k){
+    b.disabled=true;
+    if(k===q.answer){ b.classList.add('correct'); }
+    else if(b===btn){ b.classList.add('wrong'); }
+  });
+  const ex=$('#postExplain');
+  ex.className='explain show';
+  ex.innerHTML=q.explain;
+  renderStats();
+}
+
+// 学习统计
+function renderStats(){
+  $('#stPreTotal').textContent=stats.pre.total;
+  $('#stPreAcc').textContent=stats.pre.total?((stats.pre.correct/stats.pre.total*100).toFixed(0)+'%'):'—';
+  const postTotal=stats.post.total+stats.calc.total;
+  const postCorrect=stats.post.correct+stats.calc.correct;
+  $('#stPostAcc').textContent=postTotal?((postCorrect/postTotal*100).toFixed(0)+'%'):'—';
+  const rows=$('#sceneRows');
+  rows.innerHTML='';
+  SCENARIOS.forEach(function(s){
+    const b=stats.pre.by[s.id]||{total:0,correct:0};
+    const pct=b.total?(b.correct/b.total*100):0;
+    const div=document.createElement('div');
+    div.className='row';
+    div.innerHTML='<span style="color:#c3ced9">'+s.name+'</span>'+
+      '<div class="track"><div class="fill" style="width:'+pct.toFixed(1)+'%"></div></div>'+
+      '<span class="num">'+b.total+' 题 '+(b.total?pct.toFixed(0)+'%':'—')+'</span>';
+    rows.appendChild(div);
+  });
+  const wl=$('#wrongList');
+  wl.innerHTML='';
+  if(!stats.wrong.length){
+    wl.innerHTML='<div class="empty">还没有错题。答错的手牌会自动记录在这里。</div>';
+    return;
+  }
+  stats.wrong.slice(0,12).forEach(function(w){
+    const div=document.createElement('div');
+    div.className='wrong-item';
+    const modeLabel=w.mode==='pre'?'翻前':(w.mode==='post'?'翻后牌面':'MDF');
+    div.innerHTML='<b>'+modeLabel+'</b> · '+(w.scene||'')+' · '+(w.hand||'')+
+      ' · 你选 <span class="w">'+w.user+'</span>，正确 <b>'+w.correct+'</b>';
+    wl.appendChild(div);
+  });
+}
+
+// 初始化与交互
+function init(){
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(t){
+    t.addEventListener('click',function(){
+      Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(x){ x.classList.remove('active'); });
+      Array.prototype.forEach.call(document.querySelectorAll('.panel'),function(x){ x.classList.remove('active'); });
+      t.classList.add('active');
+      $('#panel-'+t.dataset.tab).classList.add('active');
+      if(t.dataset.tab==='stats'){ renderStats(); }
+    });
+  });
+  $('#nextPre').addEventListener('click',newPreQuestion);
+  $('#revealBtn').addEventListener('click',function(){
+    state.revealed=true;
+    paintMatrix();
+    $('#revealBtn').textContent='已揭示';
+    $('#revealBtn').disabled=true;
+  });
+  $('#calcPool').addEventListener('input',updateCalc);
+  $('#calcBet').addEventListener('input',updateCalc);
+  $('#clearStats').addEventListener('click',function(){
+    if(confirm('确定清空所有本地练习记录？')){
+      stats=defaultStats();
+      saveStats();
+      renderStats();
+      newPreQuestion();
+    }
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.target && (e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')) return;
+    if(!$('#panel-pre').classList.contains('active')) return;
+    if(!state.answered){
+      const scn=getScenario();
+      const map={'1':scn.actions[0],'2':scn.actions[1],'3':scn.actions[2]};
+      if(map[e.key]){ answerPre(map[e.key]); }
+    } else if(e.key==='Enter'){
+      newPreQuestion();
+    }
+  });
+
+  buildMatrix();
+  buildChips();
+  newPreQuestion();
+  updateCalc();
+  newCalcQuestion();
+  renderPostQuestion();
+  renderStats();
+}
+
+init();
+})();
+</script>
+
+<script>
+// 模拟对局：牌力与风格数据
+(function(){
+'use strict';
+
+const SUIT_SYM=['♠','♥','♦','♣'];
+const RLBL={};
+for(let r=2;r<=10;r++){ RLBL[r]=String(r); }
+RLBL[11]='J'; RLBL[12]='Q'; RLBL[13]='K'; RLBL[14]='A';
+
+const STYLES={
+  rock:{name:'石头',desc:'极紧，只玩强牌，几乎不诈唬',open:.66,threeBet:.84,preCall:.74,limp:.05,betThr:.75,raiseThr:.84,callThr:.52,aggr:.18,bluff:.04},
+  turtle:{name:'乌龟',desc:'紧而被动，爱跟注，很少主动加注',open:.62,threeBet:.86,preCall:.68,limp:.35,betThr:.78,raiseThr:.88,callThr:.4,aggr:.12,bluff:.03},
+  elephant:{name:'大象',desc:'松散被动，跟注站，很难被赶走',open:.38,threeBet:.7,preCall:.42,limp:.45,betThr:.86,raiseThr:.9,callThr:.2,aggr:.15,bluff:.05},
+  jackal:{name:'胡狼',desc:'极度激进，频繁加注和诈唬',open:.45,threeBet:.62,preCall:.48,limp:.15,betThr:.55,raiseThr:.66,callThr:.34,aggr:.78,bluff:.38},
+  lion:{name:'狮子',desc:'强势进攻，有牌就压，中等诈唬',open:.52,threeBet:.72,preCall:.55,limp:.1,betThr:.6,raiseThr:.7,callThr:.38,aggr:.6,bluff:.2},
+  shark:{name:'鲨鱼',desc:'均衡型强手，选牌精准，攻守兼备',open:.55,threeBet:.74,preCall:.58,limp:.12,betThr:.62,raiseThr:.72,callThr:.44,aggr:.5,bluff:.24},
+  eagle:{name:'老鹰',desc:'紧凶，强牌高压，弱牌果断弃',open:.6,threeBet:.8,preCall:.62,limp:.05,betThr:.64,raiseThr:.75,callThr:.48,aggr:.62,bluff:.1}
+};
+const STYLE_KEYS=Object.keys(STYLES);
+
+const SIM={
+  configCount:5,
+  configStyles:['rock','turtle','shark','lion','eagle'],
+  seats:[], button:0, sb:5, bb:10,
+  deck:[], deckIndex:0, board:[], street:'preflop',
+  potChips:0, currentBet:0, lastRaise:10,
+  toAct:-1, handNo:0, heroNet:0, handsPlayed:0,
+  handOver:false, showdown:false, awaitingHero:false, thinking:-1,
+  speed:1, log:[], winners:[], resultBySeat:{}
+};
+
+function heroSeat(){ return SIM.seats.filter(function(s){ return s.isHero; })[0]; }
+function potTotal(){
+  return SIM.potChips + SIM.seats.reduce(function(a,s){ return a+s.streetBet; },0);
+}
+function canAct(s){ return !!s && !s.folded && !s.allIn; }
+function inHandSeats(){ return SIM.seats.filter(function(s){ return !s.folded; }); }
+
+function makeDeck(){
+  const d=[];
+  for(let r=2;r<=14;r++){
+    for(let s=0;s<4;s++) d.push({r:r,s:s});
+  }
+  for(let i=d.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    const t=d[i]; d[i]=d[j]; d[j]=t;
+  }
+  return d;
+}
+function drawCard(){ return SIM.deck[SIM.deckIndex++]; }
+
+// 牌力评估
+function straightHigh(ranks){
+  const set=new Set(ranks);
+  const vals=Array.from(set).sort(function(a,b){ return b-a; });
+  for(let i=0;i<vals.length;i++){
+    const hi=vals[i];
+    if(hi<5) continue;
+    let ok=true;
+    for(let k=1;k<5;k++){ if(!set.has(hi-k)){ ok=false; break; } }
+    if(ok) return hi;
+  }
+  if(set.has(14)&&set.has(5)&&set.has(4)&&set.has(3)&&set.has(2)) return 5;
+  return 0;
+}
+function evaluate(cards){
+  const ranks=cards.map(function(c){ return c.r; }).sort(function(a,b){ return b-a; });
+  const bySuit=[[],[],[],[]];
+  cards.forEach(function(c){ bySuit[c.s].push(c.r); });
+  let flushRanks=null;
+  for(let s=0;s<4;s++){
+    if(bySuit[s].length>=5){
+      flushRanks=bySuit[s].slice().sort(function(a,b){ return b-a; });
+    }
+  }
+  if(flushRanks){
+    const sf=straightHigh(flushRanks);
+    if(sf) return [8,sf];
+  }
+  const counts={};
+  ranks.forEach(function(r){ counts[r]=(counts[r]||0)+1; });
+  const groups=Object.keys(counts).map(Number).map(function(r){ return {r:r,n:counts[r]}; });
+  groups.sort(function(a,b){ return b.n-a.n || b.r-a.r; });
+
+  if(groups[0].n===4){
+    const kicker=groups.filter(function(g){ return g.r!==groups[0].r; })[0].r;
+    return [7,groups[0].r,kicker];
+  }
+  const trips=groups.filter(function(g){ return g.n>=3; }).map(function(g){ return g.r; }).sort(function(a,b){ return b-a; });
+  const pairs=groups.filter(function(g){ return g.n===2; }).map(function(g){ return g.r; }).sort(function(a,b){ return b-a; });
+  if(trips.length>=2) return [6,trips[0],trips[1]];
+  if(trips.length===1 && pairs.length>=1) return [6,trips[0],pairs[0]];
+  if(flushRanks) return [5,flushRanks[0],flushRanks[1],flushRanks[2],flushRanks[3],flushRanks[4]];
+  const uniq=Array.from(new Set(ranks));
+  const st=straightHigh(uniq);
+  if(st) return [4,st];
+  if(trips.length===1){
+    const k=groups.filter(function(g){ return g.r!==trips[0]; }).map(function(g){ return g.r; }).sort(function(a,b){ return b-a; });
+    return [3,trips[0],k[0],k[1]];
+  }
+  if(pairs.length>=2){
+    const k=groups.filter(function(g){ return g.n===1; }).map(function(g){ return g.r; }).sort(function(a,b){ return b-a; });
+    return [2,pairs[0],pairs[1],k[0]];
+  }
+  if(pairs.length===1){
+    const k=groups.filter(function(g){ return g.n===1; }).map(function(g){ return g.r; }).sort(function(a,b){ return b-a; });
+    return [1,pairs[0],k[0],k[1],k[2]];
+  }
+  return [0].concat(uniq.slice(0,5));
+}
+function cmpHand(a,b){
+  const n=Math.max(a.length,b.length);
+  for(let i=0;i<n;i++){
+    const x=a[i]||0, y=b[i]||0;
+    if(x!==y) return x-y;
+  }
+  return 0;
+}
+const CAT_NAMES=['高牌','一对','两对','三条','顺子','同花','葫芦','四条','同花顺'];
+function handDesc(ev){
+  const c=ev[0];
+  if(c===0) return '高牌 '+RLBL[ev[1]];
+  if(c===1) return '一对 '+RLBL[ev[1]];
+  if(c===2) return '两对 '+RLBL[ev[1]]+'/'+RLBL[ev[2]];
+  if(c===3) return '三条 '+RLBL[ev[1]];
+  if(c===4) return '顺子（'+RLBL[ev[1]]+' 高）';
+  if(c===5) return '同花';
+  if(c===6) return '葫芦 '+RLBL[ev[1]]+' 带 '+RLBL[ev[2]];
+  if(c===7) return '四条 '+RLBL[ev[1]];
+  return ev[1]===14?'皇家同花顺':'同花顺';
+}
+
+// 强度估算
+function preflopStrength(hole){
+  const r1=hole[0].r, r2=hole[1].r;
+  const hi=Math.max(r1,r2), lo=Math.min(r1,r2);
+  const suited=hole[0].s===hole[1].s;
+  if(r1===r2){ return Math.min(0.95, 0.46 + (hi-2)/12*0.46); }
+  let s=0.14 + (hi-2)/12*0.38 + (lo-2)/12*0.10 + (suited?0.08:0);
+  const gap=hi-lo;
+  if(gap===1) s+=0.05;
+  else if(gap===2) s+=0.02;
+  if(hi<10) s-=0.03;
+  return Math.max(0.1, Math.min(0.85, s));
+}
+function positionBonus(seat){
+  switch(seat.posLabel){
+    case 'BTN': return 0.09;
+    case 'CO': return 0.06;
+    case 'HJ': return 0.04;
+    case 'MP': return 0.02;
+    case 'SB': return -0.02;
+    case 'UTG+1': return -0.01;
+    default: return 0;
+  }
+}
+function drawBonus(hole,board){
+  const cards=hole.concat(board);
+  const sc=[0,0,0,0];
+  cards.forEach(function(c){ sc[c.s]++; });
+  let bonus=0;
+  for(let s=0;s<4;s++){ if(sc[s]===4) bonus+=0.10; }
+  const ranks=[];
+  cards.forEach(function(c){ if(ranks.indexOf(c.r)<0) ranks.push(c.r); });
+  let sd=false;
+  for(let lo=2;lo<=10;lo++){
+    let n=0;
+    for(let r=lo;r<=lo+4;r++){ if(ranks.indexOf(r)>=0) n++; }
+    if(n===4){ sd=true; break; }
+  }
+  if(!sd && [14,5,4,3,2].filter(function(r){ return ranks.indexOf(r)>=0; }).length===4) sd=true;
+  if(sd) bonus+=0.06;
+  return Math.min(0.15,bonus);
+}
+function postStrength(seat){
+  const ev=evaluate(seat.hole.concat(SIM.board));
+  let base=[0.12,0.36,0.62,0.76,0.84,0.88,0.93,0.97,0.99][ev[0]];
+  if(ev[0]===1 && SIM.board.length>=3){
+    const bmax=Math.max.apply(null, SIM.board.map(function(c){ return c.r; }));
+    if(ev[1]>=bmax) base=0.54;
+    else if(ev[1]>=bmax-2) base=0.44;
+    else base=0.34;
+  }
+  if(ev[0]<=1) base+=drawBonus(seat.hole, SIM.board);
+  return Math.max(0.05, Math.min(0.99, base));
+}
+
+// 对局引擎
+const POS_LABELS={
+  2:['BTN','BB'],
+  3:['BTN','SB','BB'],
+  4:['BTN','SB','BB','CO'],
+  5:['BTN','SB','BB','UTG','CO'],
+  6:['BTN','SB','BB','UTG','HJ','CO'],
+  7:['BTN','SB','BB','UTG','MP','HJ','CO'],
+  8:['BTN','SB','BB','UTG','UTG+1','MP','HJ','CO']
+};
+const NEXT_STREET={preflop:'flop',flop:'turn',turn:'river',river:'river'};
+const STREET_NAME={preflop:'翻牌前',flop:'翻牌',turn:'转牌',river:'河牌'};
+
+function cardText(c){ return RLBL[c.r]+SUIT_SYM[c.s]; }
+function seatName(s){ return s.isHero?'你':s.name; }
+function simLog(msg,cls){
+  SIM.log.push({msg:msg,cls:cls||''});
+  if(SIM.log.length>140) SIM.log.shift();
+}
+
+function makeSeat(isHero,id,name,styleKey){
+  return {isHero:isHero,id:id,name:name,styleKey:styleKey||null,
+    stack:1000,hole:[],folded:false,allIn:false,streetBet:0,contributed:0,
+    acted:false,posLabel:'',lastAction:'',resultText:'',startStack:1000,won:0,foldAnim:false};
+}
+
+function startSession(){
+  SIM.seats=[makeSeat(true,'hero','你')];
+  for(let i=0;i<SIM.configCount;i++){
+    const key=SIM.configStyles[i]||'shark';
+    SIM.seats.push(makeSeat(false,'ai'+i,STYLES[key].name,key));
+  }
+  SIM.button=Math.floor(Math.random()*SIM.seats.length);
+  SIM.handNo=0; SIM.heroNet=0; SIM.handsPlayed=0;
+  SIM.log=[]; SIM.winners=[]; SIM.resultBySeat={};
+  beginHand(true);
+}
+
+function beginHand(noRotate){
+  if(!noRotate){ SIM.button=(SIM.button+1)%SIM.seats.length; }
+  SIM.handNo++;
+  SIM.handsPlayed++;
+  SIM.handOver=false; SIM.showdown=false; SIM.awaitingHero=false; SIM.thinking=-1;
+  SIM.winners=[]; SIM.resultBySeat={};
+  SIM.street='preflop'; SIM.board=[]; SIM.potChips=0; SIM.currentBet=0; SIM.lastRaise=SIM.bb;
+  SIM.deck=makeDeck(); SIM.deckIndex=0;
+
+  SIM.seats.forEach(function(s){
+    if(s.stack<SIM.bb){
+      s.stack=1000;
+      simLog(seatName(s)+' 筹码不足，补码到 1000','l');
+    }
+    s.hole=[]; s.folded=false; s.allIn=false; s.streetBet=0; s.contributed=0;
+    s.acted=false; s.lastAction=''; s.resultText=''; s.won=0; s.startStack=s.stack; s.foldAnim=false;
+  });
+
+  const n=SIM.seats.length;
+  const labels=POS_LABELS[n]||POS_LABELS[8];
+  SIM.seats.forEach(function(s,i){
+    s.posLabel=labels[((i-SIM.button)%n+n)%n];
+  });
+
+  SIM.seats.forEach(function(s){ s.hole=[drawCard(),drawCard()]; });
+
+  const sbIdx=n===2?SIM.button:(SIM.button+1)%n;
+  const bbIdx=n===2?(SIM.button+1)%n:(SIM.button+2)%n;
+  postBlind(SIM.seats[sbIdx],SIM.sb);
+  postBlind(SIM.seats[bbIdx],SIM.bb);
+  SIM.currentBet=SIM.bb;
+  SIM.lastRaise=SIM.bb;
+
+  simLog('第 '+SIM.handNo+' 手 · 盲注 '+SIM.sb+'/'+SIM.bb+' · 你在 '+heroSeat().posLabel,'hl');
+  SIM.toAct=firstActorAfter(bbIdx);
+  renderSim();
+  if(SIM.toAct>=0) scheduleTurn();
+}
+
+function postBlind(seat,amt){
+  const pay=Math.min(amt,seat.stack);
+  seat.stack-=pay; seat.streetBet+=pay; seat.contributed+=pay;
+  if(seat.stack===0) seat.allIn=true;
+  simLog(seatName(seat)+' 支付盲注 '+pay,'l');
+}
+
+function firstActorAfter(idx){
+  const n=SIM.seats.length;
+  for(let k=1;k<=n;k++){
+    const s=SIM.seats[(idx+k)%n];
+    if(canAct(s)) return (idx+k)%n;
+  }
+  return -1;
+}
+function nextActorFrom(from){
+  const n=SIM.seats.length;
+  for(let k=1;k<=n;k++){
+    const i=((from+k)%n+n)%n;
+    if(canAct(SIM.seats[i]) && !SIM.seats[i].acted) return i;
+  }
+  return -1;
+}
+
+function doAction(seat,type,amount){
+  if(!canAct(seat)) return;
+  if(type==='fold'){
+    seat.folded=true; seat.lastAction='弃牌'; seat.foldAnim=true;
+    simLog(seatName(seat)+' 弃牌');
+    setTimeout(function(){
+      seat.foldAnim=false;
+      if(SIM.seats.indexOf(seat)>=0) renderSim();
+    },520);
+  } else if(type==='check'){
+    seat.lastAction='过牌';
+    simLog(seatName(seat)+' 过牌');
+  } else if(type==='call'){
+    const need=Math.max(0,SIM.currentBet-seat.streetBet);
+    const pay=Math.min(need,seat.stack);
+    seat.stack-=pay; seat.streetBet+=pay; seat.contributed+=pay;
+    if(seat.stack===0) seat.allIn=true;
+    seat.lastAction='跟注 '+pay;
+    simLog(seatName(seat)+' 跟注 '+pay+(seat.allIn?'（All-in）':''));
+  } else if(type==='bet'){
+    applyBet(seat,amount);
+  }
+  seat.acted=true;
+  SIM.awaitingHero=false;
+  SIM.thinking=-1;
+  renderSim();
+  speakAction(seat,seat.lastAction,function(){
+    setTimeout(afterAction,120*SIM.speed);
+  });
+}
+
+function applyBet(seat,target){
+  const maxTotal=seat.streetBet+seat.stack;
+  const minTotal=SIM.currentBet===0
+    ? Math.min(SIM.bb,maxTotal)
+    : Math.min(SIM.currentBet+Math.max(SIM.lastRaise,SIM.bb),maxTotal);
+  let t=Math.round(target);
+  t=Math.max(minTotal,Math.min(maxTotal,t));
+  const add=t-seat.streetBet;
+  if(add<=0){
+    seat.lastAction='过牌';
+    simLog(seatName(seat)+' 过牌');
+    return;
+  }
+  const prev=SIM.currentBet;
+  seat.stack-=add; seat.streetBet=t; seat.contributed+=add;
+  if(seat.stack===0) seat.allIn=true;
+  if(t>SIM.currentBet){
+    SIM.lastRaise=t-SIM.currentBet;
+    SIM.currentBet=t;
+    SIM.seats.forEach(function(s){
+      if(s!==seat && !s.folded && !s.allIn) s.acted=false;
+    });
+  }
+  seat.lastAction=(prev===0?'下注 ':'加注到 ')+t;
+  simLog(seatName(seat)+' '+(prev===0?'下注 ':'加注到 ')+t+(seat.allIn?'（All-in）':''));
+}
+
+function afterAction(){
+  if(SIM.handOver) return;
+  const alive=inHandSeats();
+  if(alive.length===1){ winByFold(alive[0]); return; }
+  const actors=SIM.seats.filter(canAct);
+  if(actors.length===0){ runout(); return; }
+  const allMatched=actors.every(function(s){ return s.streetBet===SIM.currentBet; });
+  const allActed=actors.every(function(s){ return s.acted; });
+  if(allMatched&&allActed){ advanceStreet(); return; }
+  let next=nextActorFrom(SIM.toAct);
+  if(next<0){
+    if(actors.every(function(s){ return s.streetBet===SIM.currentBet; })){
+      advanceStreet(); return;
+    }
+    actors.forEach(function(s){ s.acted=false; });
+    SIM.toAct=SIM.seats.indexOf(actors[0]);
+    renderSim();
+    scheduleTurn();
+    return;
+  }
+  SIM.toAct=next;
+  renderSim();
+  scheduleTurn();
+}
+
+function collectStreet(){
+  SIM.seats.forEach(function(s){ SIM.potChips+=s.streetBet; s.streetBet=0; });
+  SIM.currentBet=0;
+  SIM.lastRaise=SIM.bb;
+}
+
+function dealStreetCards(street){
+  if(street==='flop'){ SIM.board.push(drawCard(),drawCard(),drawCard()); }
+  else { SIM.board.push(drawCard()); }
+}
+
+function advanceStreet(){
+  collectStreet();
+  const alive=inHandSeats();
+  if(alive.length===1){ winByFold(alive[0]); return; }
+  if(SIM.street==='river'){ resolvePots(); return; }
+  SIM.street=NEXT_STREET[SIM.street];
+  dealStreetCards(SIM.street);
+  SIM.seats.forEach(function(s){ s.acted=false; s.lastAction=''; });
+  simLog(STREET_NAME[SIM.street]+'：'+SIM.board.map(cardText).join(' '),'hl');
+  if(SIM.seats.filter(canAct).length===0){ runout(); return; }
+  SIM.toAct=firstActorAfter(SIM.button);
+  renderSim();
+  scheduleTurn();
+}
+
+function runout(){
+  collectStreet();
+  while(SIM.street!=='river'){
+    SIM.street=NEXT_STREET[SIM.street];
+    dealStreetCards(SIM.street);
+    simLog(STREET_NAME[SIM.street]+'：'+SIM.board.map(cardText).join(' '),'hl');
+  }
+  resolvePots();
+}
+
+function winByFold(winner){
+  collectStreet();
+  winner.stack+=SIM.potChips;
+  winner.won=SIM.potChips;
+  SIM.winners=[winner];
+  simLog(seatName(winner)+' 赢得底池 '+SIM.potChips+'（其他人都弃牌）','win');
+  SIM.potChips=0;
+  finishHand(false);
+}
+
+function resolvePots(){
+  const levels=[];
+  SIM.seats.forEach(function(s){
+    if(s.contributed>0 && levels.indexOf(s.contributed)<0) levels.push(s.contributed);
+  });
+  levels.sort(function(a,b){ return a-b; });
+  const evals={};
+  SIM.seats.forEach(function(s){
+    if(!s.folded) evals[s.id]=evaluate(s.hole.concat(SIM.board));
+  });
+  SIM.winners=[];
+  let prev=0;
+  levels.forEach(function(L){
+    let amt=0;
+    SIM.seats.forEach(function(s){
+      amt+=Math.max(0,Math.min(s.contributed,L)-Math.min(s.contributed,prev));
+    });
+    const eligible=SIM.seats.filter(function(s){ return !s.folded && s.contributed>=L; });
+    prev=L;
+    if(amt<=0) return;
+    let best=null, winners=[];
+    eligible.forEach(function(s){
+      const ev=evals[s.id];
+      if(!ev) return;
+      if(!best||cmpHand(ev,best)>0){ best=ev; winners=[s]; }
+      else if(cmpHand(ev,best)===0){ winners.push(s); }
+    });
+    if(!winners.length){
+      if(SIM.winners.length){ SIM.winners[0].stack+=amt; SIM.winners[0].won+=amt; }
+      return;
+    }
+    const each=Math.floor(amt/winners.length);
+    let rem=amt-each*winners.length;
+    winners.forEach(function(w,k){
+      const gain=each+(k<rem?1:0);
+      w.stack+=gain; w.won+=gain;
+      if(SIM.winners.indexOf(w)<0) SIM.winners.push(w);
+    });
+    winners.forEach(function(w){ w.resultText=handDesc(evals[w.id]); });
+  });
+
+  SIM.showdown=true;
+  inHandSeats().forEach(function(s){
+    simLog(seatName(s)+'：'+s.hole.map(cardText).join(' ')+' → '+(evals[s.id]?handDesc(evals[s.id]):''),'l');
+  });
+  if(SIM.winners.length){
+    SIM.winners.forEach(function(w){
+      simLog(seatName(w)+' 赢得 '+w.won,'win');
+    });
+  }
+  SIM.potChips=0;
+  finishHand(true);
+}
+
+function finishHand(showdown){
+  SIM.handOver=true;
+  SIM.showdown=!!showdown;
+  SIM.awaitingHero=false;
+  SIM.thinking=-1;
+  const hero=heroSeat();
+  SIM.heroNet+=hero.stack-hero.startStack;
+  simLog('—— 本手结束，你的净收益 '+(SIM.heroNet>=0?'+':'')+SIM.heroNet+' ——','l');
+  renderSim();
+}
+
+// AI 决策
+function clampRaise(seat,target){
+  const maxTotal=seat.streetBet+seat.stack;
+  const minTotal=SIM.currentBet===0
+    ? Math.min(SIM.bb,maxTotal)
+    : Math.min(SIM.currentBet+Math.max(SIM.lastRaise,SIM.bb),maxTotal);
+  return Math.max(minTotal,Math.min(maxTotal,Math.round(target)));
+}
+function aiOpenSize(seat){
+  const limpers=SIM.seats.filter(function(s){
+    return s!==seat && !s.folded && s.streetBet===SIM.bb;
+  }).length;
+  return clampRaise(seat,SIM.bb*3+limpers*SIM.bb);
+}
+function aiBetSize(seat,strength,pot,bluff){
+  let frac=0.5;
+  if(bluff) frac=0.55;
+  else if(strength>0.86) frac=0.8;
+  else if(strength>0.7) frac=0.65;
+  let target;
+  if(SIM.currentBet===0) target=Math.max(SIM.bb,pot*frac);
+  else target=SIM.currentBet+(pot+(SIM.currentBet-seat.streetBet))*frac;
+  return clampRaise(seat,target);
+}
+function aiAct(seat){
+  if(!canAct(seat)) return;
+  const st=STYLES[seat.styleKey]||STYLES.shark;
+  const callAmt=SIM.currentBet-seat.streetBet;
+  const pot=potTotal();
+  const potOdds=callAmt>0?callAmt/(pot+callAmt):0;
+  const nOpp=Math.max(1,SIM.seats.filter(function(s){ return !s.folded&&s!==seat; }).length);
+  let strength;
+  if(SIM.street==='preflop'){
+    strength=preflopStrength(seat.hole)+positionBonus(seat)-0.02*(nOpp-1);
+  } else {
+    strength=postStrength(seat)-0.045*(nOpp-1);
+  }
+  const rnd=Math.random();
+  const maxTotal=seat.streetBet+seat.stack;
+
+  if(callAmt<=0){
+    if(SIM.street==='preflop'){ doAction(seat,'check'); return; }
+    if(strength>=st.betThr && rnd<0.35+st.aggr*0.6){
+      doAction(seat,'bet',aiBetSize(seat,strength,pot,false)); return;
+    }
+    if(rnd<st.bluff){
+      doAction(seat,'bet',aiBetSize(seat,0.2,pot,true)); return;
+    }
+    doAction(seat,'check'); return;
+  }
+
+  if(SIM.street==='preflop'){
+    const isOpen=(SIM.currentBet<=SIM.bb);
+    if(isOpen){
+      if(strength>=st.open && rnd<0.75+st.aggr*0.25){
+        doAction(seat,'bet',aiOpenSize(seat)); return;
+      }
+      if(strength>=st.open-0.08 && rnd<st.limp){
+        doAction(seat,'call'); return;
+      }
+      if(seat.streetBet>=SIM.currentBet){ doAction(seat,'check'); return; }
+      doAction(seat,'fold'); return;
+    }
+    if(strength>=st.threeBet && rnd<0.35+st.aggr*0.5 && maxTotal>SIM.currentBet){
+      doAction(seat,'bet',clampRaise(seat,SIM.currentBet*2.8)); return;
+    }
+    if(strength>=st.preCall && strength>=potOdds*1.5){
+      doAction(seat,'call'); return;
+    }
+    if(rnd<st.bluff*0.5 && maxTotal>SIM.currentBet){
+      doAction(seat,'bet',clampRaise(seat,SIM.currentBet*2.8)); return;
+    }
+    doAction(seat,'fold'); return;
+  }
+
+  if(strength>=st.raiseThr && rnd<0.3+st.aggr*0.6 && maxTotal>SIM.currentBet){
+    doAction(seat,'bet',aiBetSize(seat,strength,pot,false)); return;
+  }
+  if(rnd<st.bluff && maxTotal>SIM.currentBet*1.5){
+    doAction(seat,'bet',aiBetSize(seat,0.3,pot,true)); return;
+  }
+  if(strength>=st.callThr && (st.callThr<=0.3 || strength>=potOdds*1.15)){
+    doAction(seat,'call'); return;
+  }
+  doAction(seat,'fold');
+}
+
+function scheduleTurn(){
+  if(SIM.handOver) return;
+  const idx=SIM.toAct;
+  if(idx<0) return;
+  const seat=SIM.seats[idx];
+  if(!canAct(seat)){ afterAction(); return; }
+  if(seat.isHero){
+    SIM.awaitingHero=true;
+    SIM.thinking=-1;
+    renderSim();
+    return;
+  }
+  SIM.awaitingHero=false;
+  SIM.thinking=idx;
+  renderSim();
+  const delay=(SIM.speed>=1?320:140)+Math.random()*100;
+  setTimeout(function(){
+    if(SIM.handOver) return;
+    if(SIM.toAct!==idx) return;
+    if(!canAct(seat)) return;
+    aiAct(seat);
+  },delay);
+}
+
+// 模拟对局：界面
+SIM.lastPot=0;
+
+function simEl(sel){ return document.querySelector(sel); }
+function escHtml(s){
+  return String(s).replace(/[&<>"]/g,function(ch){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch];
+  });
+}
+function cardHtml(c,small){
+  const red=(c.s===1||c.s===2);
+  return '<div class="sim-card'+(small?' small':'')+(red?' red':'')+'">'+
+    '<span class="cr">'+RLBL[c.r]+'</span><span class="cs">'+SUIT_SYM[c.s]+'</span></div>';
+}
+function backHtml(small){ return '<div class="sim-card back'+(small?' small':'')+'"></div>'; }
+
+const STYLE_COLOR={rock:'#8b98a5',turtle:'#3fb950',elephant:'#d29922',jackal:'#a371f7',lion:'#e3872d',shark:'#4493f8',eagle:'#f85149'};
+const STYLE_EMOJI={rock:'石',turtle:'龟',elephant:'象',jackal:'狼',lion:'狮',shark:'鲨',eagle:'鹰'};
+function seatPositions(total){
+  const ai=total-1;
+  const pos=[{x:50,y:88}];
+  const spacing=ai>=7?40:(ai===6?48:60);
+  for(let k=0;k<ai;k++){
+    const ang=ai===1?270:270+((k-(ai-1)/2)*spacing);
+    const rad=ang*Math.PI/180;
+    const x=Math.max(13,Math.min(87,50+42*Math.cos(rad)));
+    const y=Math.max(8,Math.min(84,50+38*Math.sin(rad)));
+    pos.push({x:x,y:y});
+  }
+  return pos;
+}
+
+function renderSim(){
+  const hasTable=SIM.seats.length>0;
+  simEl('#simSetup').style.display=hasTable?'none':'block';
+  simEl('#simGame').style.display=hasTable?'block':'none';
+  if(!hasTable) return;
+  const hero=heroSeat();
+  if(!hero) return;
+
+  if(!SIM.handOver) SIM.lastPot=potTotal();
+
+  simEl('#simMeta').textContent='第 '+SIM.handNo+' 手 · 盲注 '+SIM.sb+'/'+SIM.bb+
+    ' · '+SIM.seats.length+' 人桌 · 净收益 '+(SIM.heroNet>=0?'+':'')+SIM.heroNet;
+  simEl('#simLogHint').textContent='已完成 '+SIM.handsPlayed+' 手 · AI 摊牌时公开底牌';
+
+  let sh='';
+  const positions=seatPositions(SIM.seats.length);
+  SIM.seats.forEach(function(s,idx){
+    const p=positions[idx];
+    let cls='seat'+(s.isHero?' hero-seat':'');
+    if(s.folded) cls+=' folded';
+    if(SIM.toAct===idx && !SIM.handOver) cls+=' acting';
+    if(SIM.handOver && SIM.winners.indexOf(s)>=0) cls+=' winner';
+    if(s.foldAnim) cls+=' fold-anim';
+
+    let cards;
+    if(s.folded){
+      cards='<div class="slot-empty sm"></div><div class="slot-empty sm"></div>';
+    } else if(s.isHero || (SIM.showdown && SIM.handOver)){
+      cards=cardHtml(s.hole[0],true)+cardHtml(s.hole[1],true);
+    } else {
+      cards=backHtml(true)+backHtml(true);
+    }
+
+    const parts=[];
+    if(s.streetBet>0) parts.push('本街 '+s.streetBet);
+    if(s.resultText) parts.push(s.resultText);
+    if(SIM.handOver && s.won>0) parts.push('+'+s.won);
+
+    const sc=s.isHero?'#f0c674':(STYLE_COLOR[s.styleKey]||'#7c8b99');
+    const av=s.isHero?'你':(STYLE_EMOJI[s.styleKey]||STYLES[s.styleKey].name.charAt(0));
+
+    sh+='<div class="'+cls+'" style="left:'+p.x+'%;top:'+p.y+'%;--sc:'+sc+'">'+
+      '<div class="seat-top"><span class="avatar'+(s.isHero?'':' emoji')+'">'+av+'</span>'+
+        '<span class="nm">'+escHtml(s.name)+'</span>'+
+        '<span class="pos">'+s.posLabel+'</span></div>'+
+      '<div class="seat-cards">'+cards+'</div>'+
+      '<div class="seat-bot"><span class="stk">'+s.stack+'</span>'+
+        '<span class="act">'+(s.lastAction||'')+'</span></div>'+
+      '<div class="seat-bet">'+parts.join(' · ')+'</div>'+
+      (s.foldAnim?'<div class="fold-stamp">弃牌</div>':'')+
+    '</div>';
+  });
+  simEl('#simSeats').className='seats'+(SIM.seats.length>=7?' many':'');
+  simEl('#simSeats').innerHTML=sh;
+
+  let bh='';
+  for(let i=0;i<5;i++){
+    bh+=SIM.board[i]?cardHtml(SIM.board[i]):'<div class="slot-empty"></div>';
+  }
+  simEl('#simBoard').innerHTML=bh;
+  simEl('#simPot').textContent=SIM.lastPot;
+  simEl('#simStreet').textContent=SIM.handOver?'本手结束':STREET_NAME[SIM.street];
+
+  simEl('#simHeroPos').textContent=hero.posLabel;
+  simEl('#simHeroStack').textContent=hero.stack;
+  simEl('#simHeroBet').textContent=hero.streetBet>0?' · 本街 '+hero.streetBet:'';
+
+  renderHeroActions();
+
+  simEl('#simLog').innerHTML=SIM.log.map(function(e){
+    return '<div class="'+(e.cls||'')+'">'+escHtml(e.msg)+'</div>';
+  }).join('');
+  const lg=simEl('#simLog');
+  lg.scrollTop=lg.scrollHeight;
+}
+
+function gtoPct(x){ return Math.round(x*100)+'%'; }
+
+function heroGtoAdvice(){
+  const hero=heroSeat();
+  const pot=potTotal();
+  const need=Math.max(0,SIM.currentBet-hero.streetBet);
+  const h1=hero.hole[0], h2=hero.hole[1];
+  const hand=RLBL[h1.r]+SUIT_SYM[h1.s]+' '+RLBL[h2.r]+SUIT_SYM[h2.s];
+  const nOpp=Math.max(1,SIM.seats.filter(function(s){ return !s.isHero && !s.folded; }).length);
+  const opts=[];
+  let reason='';
+
+  if(SIM.street==='preflop'){
+    const st=preflopStrength(hero.hole)+positionBonus(hero)-0.02*(nOpp-1);
+    const limpers=SIM.seats.filter(function(s){ return !s.isHero && !s.folded && s.streetBet===SIM.bb; }).length;
+    const openTo=clampRaise(hero,SIM.bb*3+limpers*SIM.bb);
+    if(SIM.currentBet<=SIM.bb){
+      if(st>=0.7){
+        opts.push('加注到 '+openTo+'（主频率，约 75%）');
+        opts.push('跟注（约 15%）；其余弃牌');
+        reason='手牌强度靠前，位置 '+hero.posLabel+'。这类牌在公开开牌范围里以加注为主，偶尔平跟用于范围保护。';
+      } else if(st>=0.58){
+        opts.push('加注到 '+openTo+'（约 50%）');
+        opts.push('跟注（约 30%）');
+        opts.push('弃牌（约 20%）');
+        reason='处于混合频率区间，位置越好越偏向开牌加注；前面无人入池时可以适当放宽。';
+      } else if(st>=0.48){
+        opts.push('跟注（约 40%）');
+        opts.push('弃牌（约 60%）');
+        reason='强度不足以稳定开牌，只有在位置好、入池人数合适时才便宜看翻牌。';
+      } else {
+        opts.push('弃牌（约 90% 以上）');
+        opts.push('偶尔加注诈唬（≤10%）');
+        reason='手牌强度低，平跟会放大反向隐含赔率，默认直接放弃。';
+      }
+    } else {
+      const odds=need>0?need/(pot+need):0;
+      if(st>=0.82){
+        opts.push('3-Bet 到 '+clampRaise(hero,SIM.currentBet*2.8)+'（约 65%）');
+        opts.push('跟注（约 30%）');
+        reason='顶级强度，面对加注应主动做大底池；少量慢打用于平衡。';
+      } else if(st>=0.66 && (odds<=0.25 || st>=odds*2)){
+        opts.push('跟注（约 55%）');
+        opts.push('3-Bet 到 '+clampRaise(hero,SIM.currentBet*2.8)+'（约 20%）');
+        opts.push('弃牌（约 25%）');
+        reason='可以继续，但不宜过度投入。当前跟注额 '+need+'，底池赔率约 '+gtoPct(odds)+'，需要兼顾实现权益。';
+      } else {
+        opts.push('弃牌（约 80% 以上）');
+        opts.push('跟注（约 15%）');
+        reason='面对加注强度不足，继续跟注多数时候实现不了权益。';
+      }
+    }
+  } else {
+    const st=postStrength(hero);
+    const odds=need>0?need/(pot+need):0;
+    const mdf=need>0?pot/(pot+need):0;
+    if(need===0){
+      if(st>=0.78){
+        opts.push('价值下注 '+Math.max(SIM.bb,Math.round(pot*0.7))+'（约 70%）');
+        opts.push('过牌（约 30%）');
+        reason='牌力领先当前范围，主动下注向听牌和中等牌收取价值。';
+      } else if(st>=0.58){
+        opts.push('小尺度下注 '+Math.max(SIM.bb,Math.round(pot*0.5))+'（约 45%）');
+        opts.push('过牌（约 55%）');
+        reason='中等强度，适合小尺度混合下注；过牌可以控制底池、保留对手诈唬。';
+      } else {
+        opts.push('过牌（约 75%）');
+        opts.push('诈唬下注（约 25%，优先选有阻断牌或听牌的牌）');
+        reason='摊牌价值有限，主要靠诈唬或免费看下一街。';
+      }
+    } else {
+      opts.push('本节点整体最低防守频率 MDF ≈ '+gtoPct(mdf));
+      if(st>=0.8){
+        opts.push('加注到 '+clampRaise(hero,SIM.currentBet+(pot+need)*0.6)+'（约 30%）');
+        opts.push('跟注（约 70%）');
+        reason='强牌，跟注可以保留对手诈唬；加注用于做大底池，但要注意对手范围强度。';
+      } else if(st>=Math.max(0.4,odds*1.15)){
+        opts.push('跟注（主频率）');
+        opts.push('弃牌（约 30%）');
+        reason='强度高于跟注所需胜率（约 '+gtoPct(odds)+'），可以继续；对手下注尺度很大时收紧边缘牌。';
+      } else {
+        opts.push('弃牌（主频率）');
+        opts.push('跟注（仅在有隐含赔率或强听牌时）');
+        reason='强度低于跟注所需胜率（约 '+gtoPct(odds)+'），默认放弃，避免为对手的价值下注买单。';
+      }
+    }
+  }
+
+  return '<div class="g-title">GTO 策略参考（简化版）</div>'+
+    '<div class="g-meta">'+hand+' · '+hero.posLabel+' · '+STREET_NAME[SIM.street]+
+      ' · 对手 '+nOpp+' 人 · 底池 '+pot+(need>0?' · 需跟注 '+need:'')+'</div>'+
+    '<div class="g-opts">'+opts.map(function(o){ return '<span>· '+escHtml(o)+'</span>'; }).join('')+'</div>'+
+    '<div class="g-reason"><b>理由：</b>'+escHtml(reason)+'</div>'+
+    '<div class="g-note">这是基于公开范围、位置与底池赔率生成的启发式建议，不是 solver 输出；真实 GTO 会随对手范围、下注尺度和阻断牌变化。</div>';
+}
+
+function renderHeroActions(){
+  const wrap=simEl('#simActions');
+  const hero=heroSeat();
+  const gtoBox=simEl('#simGtoBox');
+  if(gtoBox){ gtoBox.classList.remove('show'); gtoBox.innerHTML=''; }
+  if(!hero){ wrap.innerHTML=''; return; }
+
+  if(SIM.handOver){
+    wrap.innerHTML='<div class="act-btns"><button class="btn call" id="simNextHand">下一手 →</button></div>';
+    simEl('#simNextHand').addEventListener('click',function(){ beginHand(false); });
+    return;
+  }
+  if(hero.folded){
+    wrap.innerHTML='<div class="act-empty">你已弃牌，本手等待结算。</div>';
+    return;
+  }
+  if(!SIM.awaitingHero){
+    let txt='等待对手行动…';
+    if(SIM.thinking>=0 && SIM.seats[SIM.thinking]){
+      txt=escHtml(seatName(SIM.seats[SIM.thinking]))+' 思考中…';
+    }
+    wrap.innerHTML='<div class="act-empty">'+txt+'</div>';
+    return;
+  }
+
+  const need=Math.max(0,SIM.currentBet-hero.streetBet);
+  const maxTotal=hero.streetBet+hero.stack;
+  const pot=potTotal();
+  const canRaise=maxTotal>SIM.currentBet;
+  let html='';
+
+  if(need>0 && maxTotal<=SIM.currentBet){
+    html='<div class="act-empty">筹码不足以再加注，只能弃牌或以 All-in 跟注 '+maxTotal+'。</div>';
+  } else {
+    const minTotal=need>0
+      ? Math.min(SIM.currentBet+Math.max(SIM.lastRaise,SIM.bb),maxTotal)
+      : Math.min(SIM.bb,maxTotal);
+    const def=Math.max(minTotal,Math.min(maxTotal,need>0
+      ? Math.round(SIM.currentBet+(pot+need)*0.6)
+      : Math.round(Math.max(SIM.bb,pot*0.6))));
+    html+='<div class="act-line"><span class="small">'+(need>0?'加注到':'下注')+'</span>'+
+      '<input type="range" id="simRaiseRange" min="'+minTotal+'" max="'+maxTotal+'" step="1" value="'+def+'">'+
+      '<span class="raise-val" id="simRaiseVal">'+def+'</span></div>';
+    html+='<div class="act-line" style="gap:6px">';
+    [[1,3],[1,2],[2,3],[1,1]].forEach(function(p){
+      const frac=p[0]/p[1];
+      const t=need>0
+        ? Math.round(SIM.currentBet+(pot+need)*frac)
+        : Math.round(pot*frac);
+      html+='<button class="preset" data-amt="'+t+'">'+(p[0]+'/'+p[1])+' 底池</button>';
+    });
+    html+='<button class="preset" data-amt="'+maxTotal+'">All-in</button>';
+    html+='</div>';
+  }
+
+  html+='<div class="act-btns">';
+  html+='<button class="btn fold" id="simFold">弃牌</button>';
+  if(need>0){
+    const pay=Math.min(need,hero.stack);
+    html+='<button class="btn call" id="simCall">'+(pay>=hero.stack?'All-in 跟注 ':'跟注 ')+pay+'</button>';
+  } else {
+    html+='<button class="btn call" id="simCheck">过牌</button>';
+  }
+  if(canRaise){
+    html+='<button class="btn raise" id="simRaiseBtn"></button>';
+  }
+  html+='<button class="btn ghost" id="simGtoBtn" style="font-size:12px;padding:10px 14px">查看GTO策略</button>';
+  html+='<button class="btn ghost" id="simEqBtn" style="font-size:12px;padding:10px 14px">计算胜率</button>';
+  html+='</div>';
+  wrap.innerHTML=html;
+
+  const fold=simEl('#simFold');
+  if(fold) fold.addEventListener('click',function(){ doAction(hero,'fold'); });
+  const call=simEl('#simCall');
+  if(call) call.addEventListener('click',function(){ doAction(hero,'call'); });
+  const check=simEl('#simCheck');
+  if(check) check.addEventListener('click',function(){ doAction(hero,'check'); });
+
+  const range=simEl('#simRaiseRange');
+  const rb=simEl('#simRaiseBtn');
+  if(range && rb){
+    const label=need>0?'加注到 ':'下注 ';
+    const upd=function(){
+      simEl('#simRaiseVal').textContent=range.value;
+      rb.textContent=label+range.value;
+    };
+    range.addEventListener('input',upd);
+    upd();
+    wrap.querySelectorAll('.preset').forEach(function(b){
+      b.addEventListener('click',function(){
+        const v=Math.max(Number(range.min),Math.min(Number(range.max),Number(b.dataset.amt)));
+        range.value=String(v);
+        upd();
+      });
+    });
+    rb.addEventListener('click',function(){ doAction(hero,'bet',Number(range.value)); });
+  }
+
+  const gb=simEl('#simGtoBtn');
+  if(gb){
+    gb.addEventListener('click',function(){
+      const box=simEl('#simGtoBox');
+      if(box.classList.contains('show')){
+        box.classList.remove('show');
+        box.innerHTML='';
+        return;
+      }
+      box.innerHTML=heroGtoAdvice();
+      box.classList.add('show');
+    });
+  }
+
+  const eb=simEl('#simEqBtn');
+  if(eb){
+    eb.addEventListener('click',function(){
+      const box=simEl('#simGtoBox');
+      if(!box) return;
+      if(!window.calcSimEquity){ return; }
+      const toInt=function(c){ return (c.r-2)*4+c.s; };
+      const heroCards=hero.hole.map(toInt);
+      const boardCards=SIM.board.map(toInt);
+      const opps=SIM.seats.filter(function(x){ return !x.isHero && !x.folded; }).length;
+      box.classList.add('show');
+      box.innerHTML='计算中… 对手 '+opps+' 人，底池 '+potTotal()+'，公共牌 '+(SIM.board.length||'0')+' 张';
+      window.calcSimEquity(heroCards,boardCards,opps,10000,function(r){
+        if(r.error){ box.innerHTML='无法计算：'+r.error; return; }
+        const streetName=SIM.board.length===0?'翻牌前':SIM.board.length===3?'翻牌':SIM.board.length===4?'转牌':'河牌';
+        box.innerHTML='<b>你的胜率：'+r.equity.toFixed(1)+'%</b>（'+streetName+' · 对手 '+opps+' 人 · '+
+          r.iters.toLocaleString()+' 次模拟）<br>'+
+          '单独获胜 '+r.win.toFixed(1)+'% · 平局 '+r.tie.toFixed(1)+'%<br>'+
+          '<span class="small">对手手牌按随机分配，仅代表「你 vs 随机范围」的胜率，不含对手实际开牌范围。</span>';
+      });
+    });
+  }
+}
+
+// 背景音乐与语音
+const AUDIO={ctx:null,master:null,timer:null,step:0,musicOn:true,voiceOn:true};
+const VOICE_PITCH={rock:0.75,turtle:0.85,elephant:0.8,jackal:1.55,lion:1.15,shark:1.0,eagle:1.3};
+
+function initAudio(){
+  if(AUDIO.ctx) return;
+  const Ctx=window.AudioContext||window.webkitAudioContext;
+  if(!Ctx) return;
+  try{
+    AUDIO.ctx=new Ctx();
+    AUDIO.master=AUDIO.ctx.createGain();
+    AUDIO.master.gain.value=0.28;
+    AUDIO.master.connect(AUDIO.ctx.destination);
+  }catch(e){ AUDIO.ctx=null; }
+}
+
+function musicNote(freq,dur,vol,type){
+  if(!AUDIO.ctx||!AUDIO.master) return;
+  const ctx=AUDIO.ctx;
+  const t=ctx.currentTime;
+  const osc=ctx.createOscillator();
+  const g=ctx.createGain();
+  osc.type=type||'sine';
+  osc.frequency.value=freq;
+  g.gain.setValueAtTime(0,t);
+  g.gain.linearRampToValueAtTime(vol,t+0.08);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  osc.connect(g); g.connect(AUDIO.master);
+  osc.start(t); osc.stop(t+dur+0.05);
+}
+
+function startMusic(){
+  initAudio();
+  if(!AUDIO.ctx) return;
+  if(AUDIO.ctx.state==='suspended'){ AUDIO.ctx.resume(); }
+  if(AUDIO.timer||!AUDIO.musicOn) return;
+  const seq=[262,330,392,523,392,330,294,349,392,330];
+  AUDIO.timer=setInterval(function(){
+    if(!AUDIO.musicOn) return;
+    musicNote(seq[AUDIO.step%seq.length],1.5,0.09,'sine');
+    if(AUDIO.step%5===0) musicNote(seq[(AUDIO.step+4)%seq.length]*0.5,2.4,0.05,'triangle');
+    AUDIO.step++;
+  },780);
+}
+
+function stopMusic(){
+  if(AUDIO.timer){ clearInterval(AUDIO.timer); AUDIO.timer=null; }
+}
+
+function cancelVoice(){
+  if('speechSynthesis' in window){
+    try{ speechSynthesis.cancel(); }catch(e){}
+  }
+}
+
+function speakAction(seat,text,done){
+  let finished=false,poll=null,hard=null;
+  const finish=function(){
+    if(finished) return;
+    finished=true;
+    if(poll) clearInterval(poll);
+    if(hard) clearTimeout(hard);
+    if(done) done();
+  };
+  if(!AUDIO.voiceOn||!text||!('speechSynthesis' in window)){ finish(); return; }
+  try{
+    const u=new SpeechSynthesisUtterance(seatName(seat)+'，'+text);
+    u.lang='zh-CN';
+    u.rate=1.2;
+    u.pitch=seat.isHero?1.05:(VOICE_PITCH[seat.styleKey]||1);
+    u.volume=1;
+    let started=false,quiet=0;
+    u.onstart=function(){ started=true; };
+    u.onend=finish;
+    u.onerror=finish;
+    speechSynthesis.speak(u);
+    poll=setInterval(function(){
+      if(!started) return;
+      if(speechSynthesis.speaking||speechSynthesis.pending){ quiet=0; return; }
+      quiet++;
+      if(quiet>=3) finish();
+    },150);
+    hard=setTimeout(finish,6000);
+  }catch(e){ finish(); }
+}
+
+function updateSoundBtns(){
+  const mb=simEl('#simMusicBtn'), vb=simEl('#simVoiceBtn');
+  if(mb) mb.textContent='音乐：'+(AUDIO.musicOn?'开':'关');
+  if(vb) vb.textContent='语音：'+(AUDIO.voiceOn?'开':'关');
+}
+
+// 设置界面
+function syncStyles(){
+  for(let i=0;i<SIM.configCount;i++){
+    if(!SIM.configStyles[i]){
+      SIM.configStyles[i]=STYLE_KEYS[Math.floor(Math.random()*STYLE_KEYS.length)];
+    }
+  }
+  SIM.configStyles.length=SIM.configCount;
+}
+
+function renderSetup(){
+  syncStyles();
+  const cw=simEl('#simCount');
+  cw.innerHTML='';
+  for(let n=1;n<=7;n++){
+    const total=n+1;
+    const b=document.createElement('button');
+    b.className='cbtn'+(SIM.configCount===n?' active':'');
+    b.textContent=total+'人';
+    b.title=total+' 人桌：你 + '+n+' 个对手';
+    b.addEventListener('click',function(){
+      SIM.configCount=n;
+      renderSetup();
+    });
+    cw.appendChild(b);
+  }
+  const hint=simEl('#simTableHint');
+  if(hint) hint.textContent='含你 · 当前 '+(SIM.configCount+1)+' 人桌（你 + '+SIM.configCount+' 个对手）';
+
+  const grid=simEl('#simStyles');
+  grid.innerHTML='';
+  for(let i=0;i<SIM.configCount;i++){
+    const key=SIM.configStyles[i];
+    const item=document.createElement('div');
+    item.className='style-item';
+    let opts='';
+    STYLE_KEYS.forEach(function(k){
+      opts+='<option value="'+k+'"'+(k===key?' selected':'')+'>'+STYLES[k].name+'</option>';
+    });
+    item.innerHTML='<div class="slot">对手 '+(i+1)+'</div>'+
+      '<select data-idx="'+i+'">'+opts+'</select>'+
+      '<div class="sdesc">'+STYLES[key].desc+'</div>';
+    item.querySelector('select').addEventListener('change',function(e){
+      SIM.configStyles[i]=e.target.value;
+      item.querySelector('.sdesc').textContent=STYLES[e.target.value].desc;
+    });
+    grid.appendChild(item);
+  }
+}
+
+function initSim(){
+  simEl('#simStart').addEventListener('click',function(){
+    syncStyles();
+    startSession();
+    startMusic();
+    updateSoundBtns();
+  });
+  if('speechSynthesis' in window){
+    try{ speechSynthesis.getVoices(); }catch(e){}
+  }
+  simEl('#simRandom').addEventListener('click',function(){
+    for(let i=0;i<SIM.configCount;i++){
+      SIM.configStyles[i]=STYLE_KEYS[Math.floor(Math.random()*STYLE_KEYS.length)];
+    }
+    renderSetup();
+  });
+  simEl('#simMusicBtn').addEventListener('click',function(){
+    AUDIO.musicOn=!AUDIO.musicOn;
+    if(AUDIO.musicOn && SIM.seats.length) startMusic(); else stopMusic();
+    updateSoundBtns();
+  });
+  simEl('#simVoiceBtn').addEventListener('click',function(){
+    AUDIO.voiceOn=!AUDIO.voiceOn;
+    if(!AUDIO.voiceOn) cancelVoice();
+    updateSoundBtns();
+  });
+  simEl('#simSpeedBtn').addEventListener('click',function(){
+    SIM.speed=SIM.speed>=1?0.4:1;
+    simEl('#simSpeedBtn').textContent=SIM.speed>=1?'速度：正常':'速度：快速';
+  });
+  simEl('#simQuit').addEventListener('click',function(){
+    if(!confirm('退出当前对局？本局进度不会保留。')) return;
+    stopMusic();
+    cancelVoice();
+    SIM.handOver=true;
+    SIM.seats=[];
+    SIM.toAct=-1;
+    SIM.thinking=-1;
+    SIM.awaitingHero=false;
+    SIM.log=[];
+    SIM.handNo=0;
+    SIM.heroNet=0;
+    SIM.handsPlayed=0;
+    SIM.lastPot=0;
+    SIM.winners=[];
+    SIM.showdown=false;
+    renderSim();
+    renderSetup();
+  });
+
+  renderSetup();
+  renderSim();
+}
+
+// 胜率计算器（蒙特卡洛）
+(function(){
+  const EQ_RANKS='23456789TJQKA', EQ_SYM=['♠','♥','♦','♣'];
+  const EQ={n:2,hands:[[],[]],board:[],busy:false};
+  function eqEl(id){ return document.getElementById(id); }
+  function eqLabel(c){ return EQ_RANKS[c>>2]+EQ_SYM[c&3]; }
+  function eqPhaseLabel(p){ return p===0?'翻牌前':p===3?'翻牌后':p===4?'转牌后':'河牌后'; }
+
+  /* 牌型评估：返回可比较的数组，[类别, 主牌, 踢脚…] */
+  function eqStraightHigh(values){
+    const vals={};
+    values.forEach(function(v){ vals[v]=1; });
+    if(vals[14]) vals[1]=1;
+    for(let high=14;high>=5;high--){
+      let ok=true;
+      for(let v=high-4;v<=high;v++){ if(!vals[v]){ ok=false; break; } }
+      if(ok) return high;
+    }
+    return 0;
+  }
+  function eqEval(cards){
+    const counts={}, suits=[[],[],[],[]];
+    cards.forEach(function(c){
+      const r=(c>>2)+2, s=c&3;
+      counts[r]=(counts[r]||0)+1;
+      suits[s].push(r);
+    });
+    const rankNums=Object.keys(counts).map(Number);
+    const groups=rankNums.map(function(r){ return [counts[r],r]; }).sort(function(a,b){ return b[0]-a[0]||b[1]-a[1]; });
+    let flush=null;
+    suits.forEach(function(a){ if(a.length>=5 && !flush) flush=a; });
+    if(flush){
+      const sf=eqStraightHigh(flush);
+      if(sf) return [8,sf];
+    }
+    if(groups[0][0]===4){
+      const q=groups[0][1];
+      let kick=0;
+      rankNums.forEach(function(r){ if(r!==q&&r>kick) kick=r; });
+      return [7,q,kick];
+    }
+    const trips=rankNums.filter(function(r){ return counts[r]>=3; }).sort(function(a,b){ return b-a; });
+    const pairs=rankNums.filter(function(r){ return counts[r]>=2&&trips.indexOf(r)<0; }).sort(function(a,b){ return b-a; });
+    if(trips.length&&(pairs.length||trips.length>1)) return [6,trips[0],Math.max.apply(null,pairs.concat(trips.slice(1)))];
+    if(flush) return [5].concat(flush.slice().sort(function(a,b){ return b-a; }).slice(0,5));
+    const st=eqStraightHigh(rankNums);
+    if(st) return [4,st];
+    if(trips.length){
+      return [3,trips[0]].concat(rankNums.filter(function(r){ return r!==trips[0]; }).sort(function(a,b){ return b-a; }).slice(0,2));
+    }
+    if(pairs.length>=2){
+      const rest=rankNums.filter(function(r){ return r!==pairs[0]&&r!==pairs[1]; });
+      return [2,pairs[0],pairs[1],Math.max.apply(null,rest)];
+    }
+    if(pairs.length){
+      return [1,pairs[0]].concat(rankNums.filter(function(r){ return r!==pairs[0]; }).sort(function(a,b){ return b-a; }).slice(0,3));
+    }
+    return [0].concat(rankNums.sort(function(a,b){ return b-a; }).slice(0,5));
+  }
+  function eqCmp(a,b){
+    const len=Math.max(a.length,b.length);
+    for(let i=0;i<len;i++){
+      const x=a[i]||0, y=b[i]||0;
+      if(x!==y) return x-y;
+    }
+    return 0;
+  }
+
+  function ownerMap(){
+    const m={};
+    EQ.hands.forEach(function(h,pi){
+      h.forEach(function(c,j){ if(typeof c==='number') m[c]=pi+':'+j; });
+    });
+    EQ.board.forEach(function(c,j){ if(typeof c==='number') m[c]='b:'+j; });
+    return m;
+  }
+  function cardSelect(value,ownerKey,owner,allowUnknown){
+    const s=document.createElement('select');
+    s.className='eq-select';
+    let html='<option value="">—</option>';
+    if(allowUnknown) html+='<option value="unknown">未知</option>';
+    for(let c=0;c<52;c++){
+      const db=(owner[c]&&owner[c]!==ownerKey)?' disabled':'';
+      html+='<option value="'+c+'"'+db+'>'+eqLabel(c)+'</option>';
+    }
+    s.innerHTML=html;
+    s.value=(value==='unknown')?'unknown':(typeof value==='number'?String(value):'');
+    return s;
+  }
+  function showErr(msg){
+    const e=eqEl('eqError');
+    if(msg){ e.textContent=msg; e.classList.add('show'); }
+    else { e.textContent=''; e.classList.remove('show'); }
+  }
+
+  function eqRender(){
+    const phase=Number(eqEl('eqPhase').value);
+    const owner=ownerMap();
+    const bw=eqEl('eqBoardWrap'), br=eqEl('eqBoard');
+    bw.style.display=phase?'block':'none';
+    br.innerHTML='';
+    for(let j=0;j<phase;j++){
+      const s=cardSelect(EQ.board[j],'b:'+j,owner,false);
+      s.addEventListener('change',function(){
+        EQ.board[j]=s.value===''?undefined:Number(s.value);
+        eqRender();
+      });
+      br.appendChild(s);
+    }
+    const root=eqEl('eqPlayers');
+    root.innerHTML='';
+    for(let i=0;i<EQ.n;i++){
+      const box=document.createElement('div');
+      box.className='eq-player';
+      box.innerHTML='<div class="hd"><span>玩家 '+(i+1)+(i===0?' · 你':'')+'</span><span>'+
+        (EQ.hands[i][0]==='unknown'||EQ.hands[i][1]==='unknown'?'随机范围':'')+'</span></div><div class="cards"></div>';
+      const row=box.querySelector('.cards');
+      for(let j=0;j<2;j++){
+        const s=cardSelect(EQ.hands[i][j],i+':'+j,owner,true);
+        s.addEventListener('change',function(){
+          EQ.hands[i][j]=s.value==='unknown'?'unknown':(s.value===''?undefined:Number(s.value));
+          eqRender();
+        });
+        row.appendChild(s);
+      }
+      root.appendChild(box);
+    }
+    eqEl('eqCount').textContent=EQ.n+' 人';
+    eqEl('eqMinus').disabled=EQ.n<=2;
+    eqEl('eqPlus').disabled=EQ.n>=8;
+  }
+
+  function eqRandomize(){
+    const all=[];
+    for(let c=0;c<52;c++) all.push(c);
+    for(let i=all.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      const t=all[i]; all[i]=all[j]; all[j]=t;
+    }
+    const phase=Number(eqEl('eqPhase').value);
+    let p=0;
+    for(let i=0;i<EQ.n;i++){
+      EQ.hands[i]=[all[p++],all[p++]];
+    }
+    for(let j=0;j<phase;j++) EQ.board[j]=all[p++];
+    showErr('');
+    eqRender();
+  }
+
+  function eqCalc(){
+    if(EQ.busy) return;
+    showErr('');
+    const phase=Number(eqEl('eqPhase').value);
+    const iters=Number(eqEl('eqIters').value);
+    const hands=[], unknownIdx=[];
+    for(let i=0;i<EQ.n;i++){
+      const h=EQ.hands[i]||[];
+      if(h[0]==='unknown'||h[1]==='unknown'){ hands.push(null); unknownIdx.push(i); continue; }
+      if(typeof h[0]!=='number'||typeof h[1]!=='number'){
+        showErr('玩家 '+(i+1)+' 需要选两张牌，或两张都设为「未知」。'); return;
+      }
+      if(h[0]===h[1]){ showErr('玩家 '+(i+1)+' 选了两张相同的牌。'); return; }
+      hands.push([h[0],h[1]]);
+    }
+    const used={}, boardIn=[];
+    for(let i=0;i<hands.length;i++){
+      const h=hands[i];
+      if(!h) continue;
+      if(used[h[0]]||used[h[1]]){
+        showErr('手牌之间有重复的牌：'+eqLabel(h[0])+' / '+eqLabel(h[1])); return;
+      }
+      used[h[0]]=1; used[h[1]]=1;
+    }
+    for(let j=0;j<phase;j++){
+      const c=EQ.board[j];
+      if(typeof c!=='number'){ showErr('请补齐公共牌第 '+(j+1)+' 张。'); return; }
+      if(used[c]){ showErr('公共牌与手牌重复：'+eqLabel(c)); return; }
+      used[c]=1; boardIn.push(c);
+    }
+    const deck=[];
+    for(let c=0;c<52;c++) if(!used[c]) deck.push(c);
+    const need=2*unknownIdx.length+(5-phase);
+    if(need>deck.length){ showErr('剩余牌不足，请减少未知玩家。'); return; }
+
+    const wins=new Array(EQ.n).fill(0), ties=new Array(EQ.n).fill(0);
+    const scratch=deck.slice();
+    let done=0;
+    EQ.busy=true;
+    eqEl('eqGo').disabled=true;
+    eqEl('eqBarWrap').style.display='block';
+    eqEl('eqBar').style.width='0%';
+    eqEl('eqSummary').textContent='模拟中… 0%';
+    eqEl('eqResults').innerHTML='';
+
+    function finish(){
+      EQ.busy=false;
+      eqEl('eqGo').disabled=false;
+      eqEl('eqBar').style.width='100%';
+      eqEl('eqSummary').textContent=eqPhaseLabel(phase)+' · 基于 '+iters.toLocaleString()+' 次模拟';
+      let html='';
+      for(let i=0;i<EQ.n;i++){
+        const eq=ties[i]*100/iters;
+        const win=wins[i]*100/iters;
+        const tie=(ties[i]-wins[i])*100/iters;
+        const known=hands[i]?hands[i].map(eqLabel).join(' '):'未知手牌';
+        html+='<div class="eq-res"><div class="who"><b>玩家 '+(i+1)+'</b>'+known+'</div>'+
+          '<div class="val"><strong>'+eq.toFixed(1)+'%</strong>'+
+          '<span>底池权益 · 独胜 '+win.toFixed(1)+'% · 平局 '+tie.toFixed(1)+'%</span></div></div>';
+      }
+      eqEl('eqResults').innerHTML=html;
+    }
+    function step(){
+      const limit=Math.min(done+2500,iters);
+      while(done<limit){
+        for(let k=0;k<need;k++){
+          const j=k+Math.floor(Math.random()*(scratch.length-k));
+          const t=scratch[k]; scratch[k]=scratch[j]; scratch[j]=t;
+        }
+        const sampled=hands.slice();
+        let p=0;
+        unknownIdx.forEach(function(pi){ sampled[pi]=[scratch[p],scratch[p+1]]; p+=2; });
+        const rest=scratch.slice(2*unknownIdx.length, 2*unknownIdx.length+(5-phase));
+        const runout=boardIn.concat(rest);
+        const scores=sampled.map(function(h){ return eqEval(h.concat(runout)); });
+        let best=scores[0], winners=[0];
+        for(let i=1;i<scores.length;i++){
+          const cmp=eqCmp(scores[i],best);
+          if(cmp>0){ best=scores[i]; winners=[i]; }
+          else if(cmp===0){ winners.push(i); }
+        }
+        winners.forEach(function(i){ ties[i]++; });
+        if(winners.length===1) wins[winners[0]]++;
+        done++;
+      }
+      const pct=Math.floor(done*100/iters);
+      eqEl('eqBar').style.width=pct+'%';
+      if(done<iters){
+        eqEl('eqSummary').textContent='模拟中… '+pct+'%';
+        setTimeout(step,0);
+      } else finish();
+    }
+    setTimeout(step,0);
+  }
+
+  eqEl('eqPhase').addEventListener('change',function(){
+    const phase=Number(eqEl('eqPhase').value);
+    if(EQ.board.length>phase) EQ.board=EQ.board.slice(0,phase);
+    eqRender();
+  });
+  eqEl('eqMinus').addEventListener('click',function(){
+    if(EQ.n>2){ EQ.hands.pop(); EQ.n--; eqRender(); }
+  });
+  eqEl('eqPlus').addEventListener('click',function(){
+    if(EQ.n<8){ EQ.hands.push([]); EQ.n++; eqRender(); }
+  });
+  eqEl('eqRandom').addEventListener('click',eqRandomize);
+  eqEl('eqGo').addEventListener('click',eqCalc);
+  /* 供「模拟对局」调用：已知主角手牌与公共牌，其余对手手牌按随机分配 */
+  window.calcSimEquity=function(heroCards,boardCards,opponents,iters,onDone){
+    if(opponents<1){ onDone({error:'没有仍在局中的对手'}); return; }
+    const used={};
+    heroCards.forEach(function(c){ used[c]=1; });
+    boardCards.forEach(function(c){ used[c]=1; });
+    const deck=[];
+    for(let c=0;c<52;c++) if(!used[c]) deck.push(c);
+    const need=2*opponents+(5-boardCards.length);
+    if(need>deck.length){ onDone({error:'剩余牌不足'}); return; }
+    const total=1+opponents;
+    const wins=new Array(total).fill(0), ties=new Array(total).fill(0);
+    const scratch=deck.slice();
+    let done=0;
+    function step(){
+      const limit=Math.min(done+2500,iters);
+      while(done<limit){
+        for(let k=0;k<need;k++){
+          const j=k+Math.floor(Math.random()*(scratch.length-k));
+          const t=scratch[k]; scratch[k]=scratch[j]; scratch[j]=t;
+        }
+        const hands=[heroCards];
+        for(let i=0;i<opponents;i++) hands.push([scratch[i*2],scratch[i*2+1]]);
+        const runout=boardCards.concat(scratch.slice(2*opponents,2*opponents+(5-boardCards.length)));
+        const scores=hands.map(function(h){ return eqEval(h.concat(runout)); });
+        let best=scores[0], winners=[0];
+        for(let i=1;i<scores.length;i++){
+          const cmp=eqCmp(scores[i],best);
+          if(cmp>0){ best=scores[i]; winners=[i]; }
+          else if(cmp===0){ winners.push(i); }
+        }
+        winners.forEach(function(i){ ties[i]++; });
+        if(winners.length===1) wins[winners[0]]++;
+        done++;
+      }
+      if(done<iters){ setTimeout(step,0); return; }
+      onDone({
+        equity:ties[0]*100/iters,
+        win:wins[0]*100/iters,
+        tie:(ties[0]-wins[0])*100/iters,
+        iters:iters, players:total
+      });
+    }
+    setTimeout(step,0);
+  };
+
+  if(eqEl('eqPlayers')) eqRender();
+})();
+
+// 听牌赔率速查器
+(function(){
+  const DRAWS=[
+    ['卡顺听牌','中间缺一张',4,'如 5-6-8-9，需要 7'],
+    ['两头顺听牌','两边都能成',8,'如 5-6-7-8，需要 4 或 9'],
+    ['同花听牌','四张同花色',9,'手两张♠ + 面两张♠'],
+    ['对子提升','对子变两对/三条',5,'顶对想再提升'],
+    ['高牌变对子','两张高牌',6,'如 AK 在 7-3-2 面'],
+    ['同花 + 卡顺','组合听牌',12,'9 + 4 − 1 重复'],
+    ['两头顺 + 高牌','强组合听牌',14,'如 KQ 在 J-T-4 面'],
+    ['同花 + 高牌','强组合听牌',15,'如 A♠K♠ 在 Q♠-5♠-2♦ 面'],
+    ['同花 + 两头顺','怪兽听牌',15,'如 5♠6♠ 在 4♠-7♠-2♦ 面']
+  ];
+  function odEl(id){ return document.getElementById(id); }
+  function odCalc(outs){
+    const po=(47-outs)/outs;
+    return {
+      turn:outs/47*100,
+      river:outs/46*100,
+      both:(1-(47-outs)/47*(46-outs)/46)*100,
+      po:po,
+      mc:100/po
+    };
+  }
+  function odUpdate(outs){
+    outs=Math.max(1,Math.min(20,Math.round(outs)||9));
+    const r=odCalc(outs);
+    odEl('odTurn').textContent=r.turn.toFixed(1)+'%';
+    odEl('odTurnF').textContent=outs+' / 47 张能成';
+    odEl('odRiver').textContent=r.river.toFixed(1)+'%';
+    odEl('odRiverF').textContent=outs+' / 46 张能成';
+    odEl('odBoth').textContent=r.both.toFixed(1)+'%';
+    odEl('odBothF').textContent='转牌或河牌至少来一张';
+    odEl('odPo').textContent=r.po.toFixed(1)+' : 1';
+    odEl('odPoF').textContent='跟注不超过底池 '+r.mc.toFixed(0)+'%';
+    const inp=odEl('oddsOuts');
+    if(inp&&Number(inp.value)!==outs) inp.value=outs;
+    document.querySelectorAll('#oddsQuick .chip').forEach(function(c){
+      c.classList.toggle('active',Number(c.dataset.outs)===outs);
+    });
+  }
+  function buildOdds(){
+    const quick=odEl('oddsQuick');
+    if(!quick) return;
+    let h='';
+    DRAWS.forEach(function(d){
+      h+='<button class="chip" data-outs="'+d[2]+'">'+d[0]+' · '+d[2]+' 张</button>';
+    });
+    quick.innerHTML=h;
+    quick.querySelectorAll('.chip').forEach(function(b){
+      b.addEventListener('click',function(){ odUpdate(Number(b.dataset.outs)); });
+    });
+    const tb=odEl('oddsTable');
+    if(tb){
+      let h='<table class="rank-table">'+
+        '<tr><td style="color:#8fa0af">听牌类型</td><td style="color:#8fa0af">Outs</td><td style="color:#8fa0af">翻牌圈→河牌圈</td><td style="color:#8fa0af">示例</td></tr>';
+      DRAWS.forEach(function(d){
+        const r=odCalc(d[2]);
+        h+='<tr class="odds-row" data-outs="'+d[2]+'">'+
+          '<td>'+d[0]+'</td><td>'+d[2]+'</td>'+
+          '<td>'+r.both.toFixed(0)+'%</td><td style="color:#7f8c99">'+d[3]+'</td></tr>';
+      });
+      h+='</table>';
+      tb.innerHTML=h;
+      tb.querySelectorAll('.odds-row').forEach(function(row){
+        row.addEventListener('click',function(){ odUpdate(Number(row.dataset.outs)); });
+      });
+    }
+    const inp=odEl('oddsOuts');
+    if(inp) inp.addEventListener('input',function(){ odUpdate(Number(inp.value)); });
+    odUpdate(9);
+  }
+  buildOdds();
+})();
+
+// 德州教学
+const LEARN_GLOSS=[
+  ['UTG','枪口位。6 人桌最先行动的座位，后面还有 5 个人，范围应该最紧。'],
+  ['HJ','劫持位（Hijack）。UTG 之后、CO 之前的座位。'],
+  ['CO','截击位（Cutoff）。按钮位前一位，位置好，可以打得比较宽。'],
+  ['BTN','按钮位。翻后永远最后行动，位置最好，开牌范围最宽。'],
+  ['SB','小盲。翻前被迫投入半个大盲，翻后先行动，位置最差。'],
+  ['BB','大盲。翻前被迫投入一个大盲，翻后同样先行动。'],
+  ['IP','有位置（In Position），在对手之后行动。'],
+  ['OOP','无位置（Out of Position），在对手之前行动。'],
+  ['Open','开牌。前面无人入池时第一个加注。'],
+  ['3-Bet','三次加注。对别人的开牌再加注。'],
+  ['冷跟','Cold call。面对加注直接用跟注进池，而不是用自己的开牌范围。'],
+  ['C-Bet','持续下注。翻前加注的人在翻牌继续下注。'],
+  ['Donk bet','领先下注。翻前跟注的人，在翻牌主动下注。'],
+  ['Check-raise','过牌-加注。先过牌，等对手下注后再加注。'],
+  ['价值下注','让更差的牌跟注来赚钱的下注。'],
+  ['诈唬','让更好的牌弃牌的下注，自身牌力很弱。'],
+  ['半诈唬','Semi-bluff。牌力暂时不够但有听牌，被跟注后仍能反超。'],
+  ['权益','Equity。这手牌摊牌获胜的概率，通常用百分比表示。'],
+  ['底池赔率','Pot odds。跟注额 ÷ 跟注后的底池总额。'],
+  ['隐含赔率','Implied odds。算上后面几条街还可能赢到的筹码。'],
+  ['MDF','最小防守频率 = P /（P + B）。低于这个比例，对手任意诈唬都能自动获利。'],
+  ['Alpha','诈唬盈亏平衡点 = B /（P + B）。对手弃牌率高于它，诈唬才开始赚钱。'],
+  ['SPR','筹码底池比。翻牌时的剩余筹码 ÷ 底池，决定翻后还剩几条街能打光。'],
+  ['阻断牌','Blocker。你手里握着的那张牌，让对手更难拿到某个强牌组合。'],
+  ['范围优势','Range advantage。你的整体范围在这个牌面上比对手更强。'],
+  ['坚果优势','Nut advantage。你范围里有更多最强牌，如顶三条、坚果同花。'],
+  ['薄价值','Thin value。牌力不强，但对手会用更差的牌跟注时仍值得下注。'],
+  ['TAG / LAG','紧凶 / 松凶。TAG 选牌紧、打法凶；LAG 选牌宽、打法更凶。'],
+  ['Nit / 跟注站','石头型（极少入池）/ 跟注站（几乎不弃牌、很少加注）。']
+];
+const LEARN_TIPS=[
+  '<b>先定位置再定范围</b>：同一手牌 UTG 弃、BTN 开。位置比牌力更常决定对错。',
+  '<b>翻前少平跟</b>：平跟既没主动权也没弃牌权益。能加注就加注，不能就弃。',
+  '<b>翻后先想对手范围</b>：「我有什么」只决定一半，「他这条线下注代表什么」决定另一半。',
+  '<b>每次下注都要有目的</b>：价值、诈唬、保护、剥夺权益，四选一。说不出来就别下。',
+  '<b>尺度服务于目的</b>：想让弱牌跟用小注，想让强牌弃用大注。别一律半池，也别反过来用。',
+  '<b>会用 MDF，别死守 MDF</b>：MDF 说的是整体防守比例，具体到这手牌还要看阻断牌和摊牌价值。',
+  '<b>诈唬挑阻断牌</b>：手里握着对手需要的牌时（如 A 高面握 A），对手更难有强牌，诈唬更容易成。',
+  '<b>对跟注站别诈唬</b>：对手不爱弃牌，就把价值下注放大、诈唬归零。这是最容易兑现的调整。',
+  '<b>100bb 的小对子靠隐含赔率</b>：没位置、多人池、对手短码时，摸三条的赔率其实不够。',
+  '<b>复盘比多打有用</b>：记录每个大底池的决策理由，比闷头多打一千手更能提升。'
+];
+/* 起手牌分层：S 无条件可打 / A 强 / B 可玩 / C 投机 / D 默认弃牌 */
+const HAND_TIERS={
+  S:['AA','KK','QQ','AKs'],
+  A:['JJ','TT','99','AKo','AQs','AJs','ATs','KQs'],
+  B:['88','77','66','A9s','A8s','A7s','A6s','A5s','KJs','KTs','QJs','QTs','JTs','T9s','98s','AQo','AJo','KQo','KJo'],
+  C:['55','44','33','22','A4s','A3s','A2s','K9s','K8s','K7s','K6s','Q9s','Q8s','J9s','J8s','T8s','T7s','97s','96s','87s','86s','76s','75s','65s','64s','54s','53s','43s','ATo','A9o','KTo','QTo','QJo','JTo']
+};
+function buildLearn(){
+  const gl=document.querySelector('#gloss');
+  if(gl){
+    let h='';
+    LEARN_GLOSS.forEach(function(g){ h+='<dt>'+g[0]+'</dt><dd>'+g[1]+'</dd>'; });
+    gl.innerHTML=h;
+  }
+  const tp=document.querySelector('#tips');
+  if(tp){
+    let h='';
+    LEARN_TIPS.forEach(function(t){ h+='<li>'+t+'</li>'; });
+    tp.innerHTML=h;
+  }
+  const ht=document.querySelector('#handTable');
+  if(ht){
+    const map={};
+    Object.keys(HAND_TIERS).forEach(function(k){
+      HAND_TIERS[k].forEach(function(x){ map[x]=k; });
+    });
+    const RK=['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
+    let h='';
+    for(let i=0;i<13;i++){
+      for(let j=0;j<13;j++){
+        let hand;
+        if(i===j) hand=RK[i]+RK[i];
+        else if(i<j) hand=RK[i]+RK[j]+'s';
+        else hand=RK[j]+RK[i]+'o';
+        h+='<div class="hc tier-'+(map[hand]||'D')+'">'+hand+'</div>';
+      }
+    }
+    ht.innerHTML=h;
+  }
+}
+buildLearn();
+
+// 风格测评
+const QZ_KEY='gtoQuizResultV1';
+const QZ_LIKERT=[['完全不符合',-2],['不太符合',-1],['说不清',0],['比较符合',1],['非常符合',2]];
+const QZ_DIM={
+  T:['紧度','松','紧'],
+  A:['主动性','被动','激进'],
+  B:['诈唬倾向','少','多'],
+  D:['情绪纪律','易上头','稳定']
+};
+/* d=维度，s=方向（1 表示越同意分数越高，-1 表示反向题） */
+const QZ_QUESTIONS=[
+  {t:'我会弃掉大部分「看起来还行」的边缘牌，比如 K9o、Q8s。',d:'T',s:1},
+  {t:'桌上一堆人入池时，我会比平时更收紧自己的范围。',d:'T',s:1},
+  {t:'我很少为了「看看翻牌」而用弱牌平跟。',d:'T',s:1},
+  {t:'位置不好时，我宁愿弃牌，也不勉强入池。',d:'T',s:1},
+  {t:'长时间没牌，我也能耐心等，不会突然放宽标准。',d:'T',s:1},
+  {t:'只要赔率合适，我愿意用很宽的范围跟注看翻牌。',d:'T',s:-1},
+  {t:'我喜欢玩同花连张和小对子这类「有想象空间」的牌，即使位置一般。',d:'T',s:-1},
+  {t:'桌上有明显很弱的玩家时，我会大幅放宽入池范围去针对他。',d:'T',s:-1},
+  {t:'有机会时，我更倾向下注或加注，而不是过牌或跟注。',d:'A',s:1},
+  {t:'我认为「主动权」比「省筹码」更重要。',d:'A',s:1},
+  {t:'对手过牌示弱时，我经常接管底池下注。',d:'A',s:1},
+  {t:'我的下注尺度通常偏大，而不是偏小。',d:'A',s:1},
+  {t:'拿到中等强度的牌时，我更愿意跟注控制底池。',d:'A',s:-1},
+  {t:'面对下注，我的第一反应通常是「跟一手看看」。',d:'A',s:-1},
+  {t:'我很少主动加注，除非牌力非常明确。',d:'A',s:-1},
+  {t:'我不喜欢在没牌的时候施压，觉得风险太大。',d:'A',s:-1},
+  {t:'我会主动寻找适合诈唬的牌面，比如单色翻牌或 A 高干燥面。',d:'B',s:1},
+  {t:'把对手从强牌上「打跑」，对我来说很有成就感。',d:'B',s:1},
+  {t:'我会根据对手的弃牌频率调整自己的诈唬频率。',d:'B',s:1},
+  {t:'摊牌赢钱不如「不战而胜」让我满足。',d:'B',s:1},
+  {t:'我只在自己确实有牌或强听牌时，才投入大额筹码。',d:'B',s:-1},
+  {t:'我认为大多数对手跟注太多，所以诈唬是浪费筹码。',d:'B',s:-1},
+  {t:'我几乎没有纯诈唬的手牌记录。',d:'B',s:-1},
+  {t:'输掉大底池后，我会先停下来复盘，而不是立刻加大下注找回。',d:'D',s:1},
+  {t:'我会严格执行自己设定的止损和买入计划。',d:'D',s:1},
+  {t:'我打牌时情绪基本稳定，一手牌不会影响后面几手。',d:'D',s:1},
+  {t:'我会记录并复盘自己的错误，而不只是记住赢的牌。',d:'D',s:1},
+  {t:'连续被诈唬几次后，我会明显变得更容易跟注。',d:'D',s:-1},
+  {t:'赢了大底池后，我往往会玩得更松、更激进。',d:'D',s:-1},
+  {t:'我有时会因为「不想被看穿」而做出情绪化的跟注。',d:'D',s:-1},
+// 具体牌局实例：opts 里每个选项直接给四维加权重
+  {t:'6 人桌 100bb，你在 UTG+1 拿到 AQs，UTG 率先加注到 2.5bb。',opts:[
+    {t:'3-bet 到 8bb，把范围压紧打价值',w:{T:1,A:2}},
+    {t:'平跟，翻后靠位置打',w:{T:0,A:-1}},
+    {t:'大部分时候 3-bet，少量平跟做混合',w:{A:1,B:1}},
+    {t:'直接弃牌，UTG 的范围太强',w:{T:2,A:-2}}
+  ]},
+  {t:'6 人桌 100bb，全部弃牌到 BTN，你拿到 76s。',opts:[
+    {t:'加注到 2.5bb，标准开牌',w:{T:-1,A:1}},
+    {t:'加注到 3.5bb，先把底池做大',w:{T:-1,A:2,B:1}},
+    {t:'平跟，便宜看翻牌',w:{T:-2,A:-2}},
+    {t:'弃牌，边缘同花连张不值得',w:{T:2,A:-1}}
+  ]},
+  {t:'6 人桌 100bb，CO 加注 2.5bb，BTN 和 SB 都弃牌，你在 BB 拿到 K8s。',opts:[
+    {t:'3-bet 到 9bb，直接反压',w:{A:2,B:1}},
+    {t:'跟注防守，翻后再说',w:{T:-1}},
+    {t:'看他弃牌多就 3-bet，否则跟注',w:{A:1,B:1,D:1}},
+    {t:'弃牌，K8s 很难实现权益',w:{T:2,A:-2}}
+  ]},
+  {t:'你在 BTN 用 AQo 开牌 2.5bb，BB 跟注。翻牌 K-7-2 彩虹，BB 过牌，你手上没有对子。',opts:[
+    {t:'下注 1/3 底池，高频持续下注',w:{A:1,B:1}},
+    {t:'下注 3/4 底池，直接施压',w:{A:2,B:1}},
+    {t:'过牌，控制底池',w:{A:-2,T:1}},
+    {t:'看他弃牌多就下注，否则过牌',w:{B:1,D:1}}
+  ]},
+  {t:'底池 20bb，翻牌 8-6-2 两同花，你持 9♠7♠（两头顺听牌加同花听牌），对手下注 13bb。',opts:[
+    {t:'加注到 33bb，用强听牌半诈唬',w:{A:2,B:2}},
+    {t:'跟注，靠听牌和赔率',w:{T:1,A:-1}},
+    {t:'弃牌，毕竟还没成牌',w:{T:2,A:-2}},
+    {t:'看赔率和剩余筹码再决定',w:{D:1}}
+  ]},
+  {t:'底池 40bb，牌面 K-Q-7-3-2，你手上 A5s 什么都没中。你在 IP，对手连续两次过牌。',opts:[
+    {t:'下注 30bb 诈唬，代表强牌',w:{A:2,B:2}},
+    {t:'下注 13bb 小注诈唬，成本更低',w:{A:1,B:1}},
+    {t:'过牌放弃，认了这手',w:{T:1,A:-2,B:-1}},
+    {t:'他爱跟就放弃，他爱弃就下注',w:{B:1,D:1}}
+  ]},
+  {t:'你用 AA 在 CO 开牌，BB 跟注。翻牌 J-8-4 两同花，BB 过牌-加注到你的 3 倍下注。',opts:[
+    {t:'3-bet 回去，AA 在这里够强',w:{T:1,A:1}},
+    {t:'跟注，控制底池看转牌',w:{T:1,A:-1}},
+    {t:'弃牌，他代表的范围太强',w:{T:2,A:-2}},
+    {t:'看他的加注频率再决定',w:{D:1}}
+  ]},
+  {t:'5 个人看翻牌，你在 BB 拿到 T9s。翻牌 T-7-3 彩虹，前面所有人过牌到你。',opts:[
+    {t:'下注 2/3 底池，直接拿价值',w:{A:2}},
+    {t:'下注 1/3 底池，控制风险',w:{A:1,T:1}},
+    {t:'过牌，五人池不扩大底池',w:{T:1,A:-2}},
+    {t:'人少就下注，人多就过牌',w:{D:1}}
+  ]},
+  {t:'你只剩 20bb，在 BTN 拿到 KQo，前面全部弃牌。',opts:[
+    {t:'直接全下，最大化弃牌权益',w:{A:2,B:1,T:-1}},
+    {t:'加注到 2.5bb，正常开牌',w:{A:1}},
+    {t:'平跟，看翻牌',w:{T:-1,A:-2}},
+    {t:'弃牌，短码的 KQo 不好打',w:{T:2,A:-2}}
+  ]},
+  {t:'你刚被同一个人连续两次诈唬掉大底池。这手你在 BB 拿到 A7o，他在 BTN 又下注 3/4 底池。',opts:[
+    {t:'跟注抓诈唬，他就是在乱开火',w:{T:-2,A:1,D:-2}},
+    {t:'弃牌，A 高不值得跟大注',w:{T:2,D:1}},
+    {t:'加注回去，让他也难受',w:{A:2,B:2,D:-2}},
+    {t:'先停一下，算他的下注频率和我的赔率',w:{D:2}}
+  ]}
+];
+/* 每种风格在四维上的目标画像（0~1） */
+const QZ_PROFILE={
+  rock:{T:.92,A:.20,B:.05,D:.92},
+  turtle:{T:.76,A:.15,B:.04,D:.62},
+  elephant:{T:.22,A:.16,B:.06,D:.28},
+  jackal:{T:.30,A:.80,B:.80,D:.26},
+  lion:{T:.52,A:.62,B:.46,D:.46},
+  shark:{T:.56,A:.52,B:.38,D:.82},
+  eagle:{T:.76,A:.68,B:.16,D:.82}
+};
+const QZ_W={T:1.5,A:1.4,B:1,D:.9};
+const QZ_ADVICE={
+  rock:'你的入池范围很干净，代价是错过大量小底池。试试在 BTN、CO 把最边缘的牌从弃牌改成加注，别只靠牌力赢钱。',
+  turtle:'你很少犯大错，但长期被动会持续失血。专门挑「对手示弱」的牌面，把跟注换成加注，收益会立刻变化。',
+  elephant:'跟注太舒服，对手会用大尺度从你身上收价值。先给自己定一条线：翻牌后没有摊牌价值就不要继续跟。',
+  jackal:'你的施压能力很强，但频率过高就等于送钱。把诈唬集中在对手范围最弱的牌面上，而不是每手都开火。',
+  lion:'敢打敢压是优势，只需要在中等强度牌上收一点尺度，别把能付钱的对手全赶走。',
+  shark:'结构最健康的一类。下一步是做针对性剥削：记住每个对手的弃牌率和跟注率，微调自己的频率。',
+  eagle:'既有纪律又有攻击性，最省心的类型。唯一要防的是对疯子型对手过度弃牌，适当放宽防守范围。'
+};
+const QZ={order:[],idx:0,answers:[],result:null,lock:false};
+
+function qzEl(sel){ return document.querySelector(sel); }
+function qzShuffle(){
+  const arr=QZ_QUESTIONS.map(function(_,i){ return i; });
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    const t=arr[i]; arr[i]=arr[j]; arr[j]=t;
+  }
+  return arr;
+}
+function qzRank(vec){
+  const dims=['T','A','B','D'];
+  const list=STYLE_KEYS.map(function(k){
+    const p=QZ_PROFILE[k];
+    let s=0;
+    dims.forEach(function(d){ s+=QZ_W[d]*Math.pow(vec[d]-p[d],2); });
+    return {k:k,s:s};
+  }).sort(function(a,b){ return a.s-b.s; });
+  const best=list[0].s;
+  list.forEach(function(it){ it.rel=Math.exp(-(it.s-best)/0.5); });
+  return list;
+}
+function qzCompute(){
+  const dims=['T','A','B','D'];
+  const sum={T:0,A:0,B:0,D:0}, cap={T:0,A:0,B:0,D:0};
+  QZ.order.forEach(function(qi,pos){
+    const q=QZ_QUESTIONS[qi], ans=QZ.answers[pos];
+    if(ans===null||ans===undefined) return;
+    if(q.opts){
+      const w=(q.opts[ans]&&q.opts[ans].w)||{};
+      dims.forEach(function(d){
+        sum[d]+=(w[d]||0);
+        let m=0;
+        q.opts.forEach(function(o){
+          const v=(o.w&&o.w[d])||0;
+          if(Math.abs(v)>m) m=Math.abs(v);
+        });
+        cap[d]+=m;
+      });
+    } else {
+      sum[q.d]+=ans*q.s;
+      cap[q.d]+=2;
+    }
+  });
+  const vec={};
+  dims.forEach(function(d){
+    vec[d]=cap[d]?((sum[d]/cap[d])+1)/2:0.5;
+  });
+  return {vec:vec,ranked:qzRank(vec)};
+}
+function qzSaveResult(vec,style){
+  try{ localStorage.setItem(QZ_KEY,JSON.stringify({vec:vec,style:style,ts:Date.now()})); }catch(e){}
+}
+function qzLoadResult(){
+  try{
+    const raw=localStorage.getItem(QZ_KEY);
+    if(!raw) return null;
+    const o=JSON.parse(raw);
+    if(!o||!o.vec) return null;
+    return o;
+  }catch(e){ return null; }
+}
+function renderQzQuestion(){
+  const total=QZ.order.length;
+  const q=QZ_QUESTIONS[QZ.order[QZ.idx]];
+  const cur=QZ.answers[QZ.idx];
+  const pct=Math.round(QZ.idx/total*100);
+  let html='';
+  html+='<div class="qz-progress"><span>第 '+(QZ.idx+1)+' / '+total+' 题</span><span>已完成 '+pct+'%</span></div>';
+  html+='<div class="qz-track"><i style="width:'+pct+'%"></i></div>';
+  if(q.opts){
+    html+='<div class="qz-q"><span class="qz-tag">牌局实例</span>'+q.t+'</div>';
+    html+='<div class="qz-opts">';
+    q.opts.forEach(function(o,i){
+      html+='<button class="qz-opt'+(cur===i?' on':'')+'" data-o="'+i+'"><span class="dot"></span><span>'+o.t+'</span></button>';
+    });
+    html+='</div>';
+  } else {
+    html+='<div class="qz-q">'+q.t+'</div>';
+    html+='<div class="qz-opts">';
+    QZ_LIKERT.forEach(function(o){
+      html+='<button class="qz-opt'+(cur===o[1]?' on':'')+'" data-v="'+o[1]+'"><span class="dot"></span><span>'+o[0]+'</span></button>';
+    });
+    html+='</div>';
+  }
+  const last=QZ.idx===total-1;
+  html+='<div class="qz-nav"><button class="btn ghost" id="qzPrev" style="font-size:13px;padding:9px 16px"'+(QZ.idx===0?' disabled':'')+'>上一题</button>';
+  if(last){
+    const allDone=QZ.answers.every(function(v){ return v!==null&&v!==undefined; });
+    html+='<button class="btn call" id="qzDone" style="font-size:13px;padding:9px 18px"'+(allDone?'':' disabled')+'>查看结果</button>';
+  } else {
+    html+='<span class="small">选择后自动进入下一题</span>';
+  }
+  html+='</div>';
+  const body=qzEl('#qzBody');
+  body.innerHTML=html;
+  Array.prototype.forEach.call(body.querySelectorAll('.qz-opt'),function(b){
+    b.addEventListener('click',function(){
+      qzPick(b.dataset.v===undefined?Number(b.dataset.o):Number(b.dataset.v));
+    });
+  });
+  const prev=body.querySelector('#qzPrev');
+  if(prev) prev.addEventListener('click',function(){ if(QZ.idx>0){ QZ.idx--; renderQzQuestion(); } });
+  const done=body.querySelector('#qzDone');
+  if(done) done.addEventListener('click',qzFinish);
+}
+function qzPick(v){
+  if(QZ.lock) return;
+  QZ.answers[QZ.idx]=v;
+  if(QZ.idx<QZ.order.length-1){
+    QZ.lock=true;
+    renderQzQuestion();
+    setTimeout(function(){ QZ.idx++; QZ.lock=false; renderQzQuestion(); },200);
+  } else {
+    renderQzQuestion();
+  }
+}
+function qzFinish(){
+  const r=qzCompute();
+  const style=r.ranked[0].k;
+  qzSaveResult(r.vec,style);
+  QZ.result={vec:r.vec,ranked:r.ranked,old:false};
+  renderQzResult();
+}
+function renderQzResult(){
+  const r=QZ.result;
+  const top=r.ranked[0];
+  const sty=STYLES[top.k];
+  let html='<div class="qz-result">';
+  html+='<div class="qz-hero">'+(STYLE_EMOJI[top.k]||'')+'</div>';
+  html+='<h2 class="qz-name">'+sty.name+'</h2>';
+  html+='<p class="qz-sub">'+sty.desc+'</p>';
+  html+='<span class="qz-match">'+(r.old?'上次测评结果':'最匹配你的风格')+'</span>';
+  html+='<div class="qz-dims">';
+  ['T','A','B','D'].forEach(function(d){
+    const info=QZ_DIM[d];
+    html+='<div class="qz-dim"><div class="t"><span>'+info[0]+'</span><b>'+info[1]+' ←→ '+info[2]+'</b></div>';
+    html+='<div class="tr"><i style="width:'+Math.round(r.vec[d]*100)+'%"></i></div></div>';
+  });
+  html+='</div>';
+  html+='<div class="qz-top"><div class="hd">最接近的三种风格（相对接近度）</div>';
+  r.ranked.slice(0,3).forEach(function(it){
+    html+='<div class="it"><span>'+(STYLE_EMOJI[it.k]||'')+' '+STYLES[it.k].name+'</span>';
+    html+='<div class="tr"><i style="width:'+Math.round(it.rel*100)+'%"></i></div>';
+    html+='<span class="pct">'+Math.round(it.rel*100)+'%</span></div>';
+  });
+  html+='</div>';
+  html+='<div class="qz-advice">'+QZ_ADVICE[top.k]+'</div>';
+  html+='<div class="actions" style="justify-content:center;margin-top:24px"><button class="btn call" id="qzRetry">重新测评</button></div>';
+  html+='<div class="note" style="text-align:left">结果基于你自己勾选的倾向，只作风格对照，不代表水平高低。</div>';
+  html+='</div>';
+  const body=qzEl('#qzBody');
+  body.innerHTML=html;
+  const retry=body.querySelector('#qzRetry');
+  if(retry) retry.addEventListener('click',qzStart);
+}
+function qzStart(){
+  QZ.result=null;
+  QZ.lock=false;
+  QZ.order=qzShuffle();
+  QZ.idx=0;
+  QZ.answers=new Array(QZ.order.length).fill(null);
+  renderQuiz();
+}
+function renderQuiz(){
+  const intro=qzEl('#qzIntro'), body=qzEl('#qzBody');
+  if(!QZ.result && !QZ.order.length){
+    const saved=qzLoadResult();
+    if(saved) QZ.result={vec:saved.vec,ranked:qzRank(saved.vec),old:true};
+  }
+  if(QZ.result){
+    intro.style.display='none'; body.style.display='block';
+    renderQzResult();
+    return;
+  }
+  if(QZ.order.length){
+    intro.style.display='none'; body.style.display='block';
+    renderQzQuestion();
+    return;
+  }
+  intro.style.display='block';
+  body.style.display='none';
+}
+function initQz(){
+  const start=qzEl('#qzStart');
+  if(start) start.addEventListener('click',qzStart);
+  const tab=document.querySelector('.tab[data-tab="quiz"]');
+  if(tab) tab.addEventListener('click',renderQuiz);
+}
+initQz();
+
+initSim();
+})();
+</script>
+</body>
+</html>
